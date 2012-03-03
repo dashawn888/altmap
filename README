@@ -1,0 +1,5 @@
+Run
+
+python manage.py syncdb
+
+to create db.
