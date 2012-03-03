@@ -3,3 +3,13 @@ Run
 python manage.py syncdb
 
 to create db.
+
+-------------------------------
+
+To start the server.
+
+python manage.py runserver
+
+-------------------------------
+
+Edit settings.py and update the TEMPLATE_DIR path
