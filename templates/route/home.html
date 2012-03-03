@@ -1,1 +1,79 @@
-Hi
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+  <title>Google Maps JavaScript API v3 Example: Geocoding Simple</title>
+  <link href="http://code.google.com/apis/maps/documentation/javascript/examples/default.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+  <script type="text/javascript">
+    var geoResults = {};
+    var geocoder;
+    var map;
+    function initialize() {
+      geocoder = new google.maps.Geocoder();
+      var latlng = new google.maps.LatLng(-34.397, 150.644);
+      var myOptions = {
+        zoom: 8,
+        center: latlng,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+      }
+      map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+    }
+   
+    function codeAddress(id) {
+      var address = document.getElementById(id).value;
+      geocoder.geocode( { 'address': address}, function(results, status) {
+        if (status == google.maps.GeocoderStatus.OK) {
+          map.setCenter(results[0].geometry.location);
+          var marker = new google.maps.Marker({
+              map: map,
+              position: results[0].geometry.location
+          });
+
+          // store the results in the geoResults object
+          geoResults[id] = results[0].geometry.location;
+          doCalculation();
+
+        } else {
+          alert("Geocode was not successful for the following reason: " + status);
+        }
+      });
+    }
+
+function popwindow() {
+var def=doCalculation();
+var def1= def[0];
+var def2 = def[1];
+alert(def1);
+alert(def2);
+}
+
+
+   function doCalculation() {
+      if (typeof geoResults.address1 === "object"
+          && typeof geoResults.address2 === "object") {
+			return [geoResults.address1, geoResults.address2];
+          // Yay.. do something now.
+          // geoResults.address1 is a LatLng() object.
+          // geoResults.address2 is a LatLng() object.
+      }
+    }
+  </script>
+</head>
+<body onload="initialize()">
+  <div>
+    <input id="address1" type="textbox" value="" style=" width:800px;height:30px;font-size:10px;">
+    <input type="button" value="Geocode" onclick="codeAddress('address1')">
+  </div>
+  <div>
+   <input id="address2" type="textbox" value="" style=" width:800px;height:30px;font-size:10px;">
+   <input type="button" value="Geocode" onclick="codeAddress('address2')">
+  </div>
+  <div>
+  
+<input type="button" onclick="popwindow()" value="Show alert box" />
+  </div>
+  <div id="map_canvas" style="height:90%;top:80px"></div>
+</body>
+</html> 

@@ -11,7 +11,7 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'route.sqlite',                      # Or path to database file if using sqlite3.
     }
 }
@@ -99,7 +99,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'altmap.urls'
 
 TEMPLATE_DIRS = (
-    "/home/shlee/Source/altmap/templates"
+    "/Users/lavince/altmap/templates"
 )
 
 INSTALLED_APPS = (
