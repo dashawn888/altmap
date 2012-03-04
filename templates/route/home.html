@@ -3,12 +3,9 @@
 <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
 <title>Alternate My Route!</title>
-<script type="text/javascript"
-      src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCRis7n8CCn_G522W7xGxjcHALPbKib2rA&sensor=false">
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCRis7n8CCn_G522W7xGxjcHALPbKib2rA&sensor=false">
 <script type="text/javascript" src="http://crypto-js.googlecode.com/files/2.5.3-crypto-sha1.js"></script>
 <script type="text/javascript">
-  
   var directionDisplay;
   var directionsService = new google.maps.DirectionsService();
   var map;
@@ -17,12 +14,12 @@
   var waypoints = [];
   var markers = [];
   var directionsVisible = false;
-  var waypt_lat=[];
-  var waypt_lng=[];
-  var i=0;
-  var latstart=0;
-  var latend=0;
-  var lngstart= 0;
+  var waypt_lat = [];
+  var waypt_lng = [];
+  var i = 0;
+  var latstart = 0;
+  var latend = 0;
+  var lngstart = 0;
   var lngend = 0;
   var geocoder;
 
@@ -30,35 +27,34 @@
     directionsDisplay = new google.maps.DirectionsRenderer();
     var chicago = new google.maps.LatLng(37.7749295, -122.4194155);
     var myOptions = {
-      zoom:13,
+      zoom: 13,
       mapTypeId: google.maps.MapTypeId.ROADMAP,
       center: chicago
     }
-    map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+    map = new google.maps.Map(
+        document.getElementById("map_canvas"), myOptions);
     directionsDisplay.setMap(map);
     directionsDisplay.setPanel(document.getElementById("directionsPanel"));
-	geocoder = new google.maps.Geocoder();
+    geocoder = new google.maps.Geocoder();
     google.maps.event.addListener(map, 'click', function(event) {
-      if (origin == null) {
+      if(origin == null) {
         i = 0;
         origin = event.latLng;
         addMarker(origin);
         latori = origin.lat();
         lngori = origin.lng();
-      } else if (destination == null) {
+      } else if(destination == null) {
         destination = event.latLng;
         latdest = destination.lat();
         lngdest = destination.lng();
         addMarker(destination);
-        //alert(latdest);
       } else {
-        if (waypoints.length < 9) {
+        if(waypoints.length < 9) {
           waypoints.push({ location: destination, stopover: true });
           destination = event.latLng;
           i = waypoints.length;
           waypt_lat[i] = destination.lat();
           waypt_lng[i] = destination.lng();
-          //alert(waypt[i]);
           addMarker(destination);
         } else {
           alert("Maximum number of waypoints reached");
@@ -66,58 +62,47 @@
       }
     });
   }
-  
+
   function getlatlng() {
     var address_start = document.getElementById("start").value;
-    geocoder.geocode( { 'address': address_start}, function(results, status) {
-     if (status == google.maps.GeocoderStatus.OK) {
-                 var loc= ParseLocation(results[0].geometry.location);
-				 document.getElementById("lat_start").value=loc[0];//$("#latlng_start").val(loc);
-              document.getElementById("lng_start").value=loc[1];
-              }
-          });
-          
-          var address_end = document.getElementById("end").value;
-    geocoder.geocode( { 'address': address_end}, function(results, status) {
-     if (status == google.maps.GeocoderStatus.OK) {
-                 var loc= ParseLocation(results[0].geometry.location);
-				 document.getElementById("lat_end").value=loc[0];//$("#latlng_start").val(loc);
-             document.getElementById("lng_end").value=loc[1];
-             }
-          });
+    geocoder.geocode({'address': address_start}, function(results, status) {
+      if(status == google.maps.GeocoderStatus.OK) {
+        var loc= ParseLocation(results[0].geometry.location);
+        document.getElementById("lat_start").value = loc[0];
+        document.getElementById("lng_start").value = loc[1];
+      }
+    });
 
+    var address_end = document.getElementById("end").value;
+    geocoder.geocode({'address': address_end}, function(results, status) {
+      if(status == google.maps.GeocoderStatus.OK) {
+        var loc= ParseLocation(results[0].geometry.location);
+        document.getElementById("lat_end").value = loc[0];
+        document.getElementById("lng_end").value = loc[1];
+      }
+    });
   }
 
-function ParseLocation(location) {
-
-      var lat = location.lat().toString().substr(0, 12);
-      var lng = location.lng().toString().substr(0, 12);
-		return [lat,lng];
-    }
+  function ParseLocation(location) {
+    var lat = location.lat().toString().substr(0, 12);
+    var lng = location.lng().toString().substr(0, 12);
+    return [lat,lng];
+  }
 
 
   function addMarker(latlng) {
     markers.push(new google.maps.Marker({
-      position: latlng, 
+      position: latlng,
       map: map,
-      icon: "http://maps.google.com/mapfiles/marker" + String.fromCharCode(markers.length + 65) + ".png"
-    }));    
+      icon: "http://maps.google.com/mapfiles/marker"
+          + String.fromCharCode(markers.length + 65) + ".png"
+    }));
   }
 
   function calcRoute() {
-  /*
-  if (origin == null) {
- alert("Click on the map to add a start point");
-     return;
-    }
-    
-    if (destination == null) {
-      alert("Click on the map to add an end point");
-      return;
-    }*/
-  var origin = document.getElementById("start").value;
+    var origin = document.getElementById("start").value;
     var destination = document.getElementById("end").value;
-    
+
     var request = {
         origin: origin,
         destination: destination,
@@ -125,56 +110,57 @@ function ParseLocation(location) {
         travelMode: google.maps.DirectionsTravelMode.DRIVING,
         optimizeWaypoints: document.getElementById('optimize').checked,
     };
-    
-   
-        getlatlng(origin);
-        getlatlng(destination);
-       // console.log(origin_latlng);
-        var lat_start = "";
-        var lat_end = "";
-        var lng_start = "";
-        var lng_end = "";
 
-        while(1){
-          lat_start = document.getElementById("lat_start").value;
-          lat_end = document.getElementById("lat_end").value;
-        lng_start = document.getElementById("lng_start").value;
-          lng_end = document.getElementById("lng_end").value;
-          if(lat_start != -1 && lat_end != -1) break;
-        }
-        
-        console.log(lat_start);
-         console.log(lat_end);
-                 console.log(lng_start);
-         console.log(lng_end);
- 
-latori=lat_start;
-lngori=lng_start;
-latdest=lat_end;
-lngdest=lng_end;
+    getlatlng(origin);
+    getlatlng(destination);
+
+    var lat_start = "";
+    var lat_end = "";
+    var lng_start = "";
+    var lng_end = "";
+
+    // TODO(shlee) For the love of GOD fix ME.
+    while(1) {
+      lat_start = document.getElementById("lat_start").value;
+      lat_end = document.getElementById("lat_end").value;
+      lng_start = document.getElementById("lng_start").value;
+      lng_end = document.getElementById("lng_end").value;
+
+      if(lat_start != -1 && lat_end != -1) break;
+    }
+
+    console.log(lat_start);
+    console.log(lat_end);
+    console.log(lng_start);
+    console.log(lng_end);
+
+    latori = lat_start;
+    lngori = lng_start;
+    latdest = lat_end;
+    lngdest = lng_end;
 
     directionsService.route(request, function(response, status) {
-      if (status == google.maps.DirectionsStatus.OK) {
+      if(status == google.maps.DirectionsStatus.OK) {
         directionsDisplay.setDirections(response);
       }
     });
-    
+
     clearMarkers();
     directionsVisible = true;
   }
-  
+
   function updateMode() {
-    if (directionsVisible) {
+    if(directionsVisible) {
       calcRoute();
     }
   }
-  
+
   function clearMarkers() {
-    for (var i = 0; i < markers.length; i++) {
+    for(var i = 0; i < markers.length; i++) {
       markers[i].setMap(null);
     }
   }
-  
+
   function clearWaypoints() {
     markers = [];
     origin = null;
@@ -184,7 +170,7 @@ lngdest=lng_end;
     waypt_lat = [];
     waypt_lng = [];
   }
-  
+
   function reset() {
     clearMarkers();
     clearWaypoints();
@@ -192,22 +178,21 @@ lngdest=lng_end;
     directionsDisplay.setPanel(null);
     directionsDisplay = new google.maps.DirectionsRenderer();
     directionsDisplay.setMap(map);
-    directionsDisplay.setPanel(document.getElementById("directionsPanel"));    
+    directionsDisplay.setPanel(document.getElementById("directionsPanel"));
   }
-  
+
   function show_alert() {
-  	 latstart = latori;
-  	 latend = latdest;
-  	 lngstart = lngori;
-  	 lngend = lngdest;
-  	//waypt_lat waypt_lng
+    latstart = latori;
+    latend = latdest;
+    lngstart = lngori;
+    lngend = lngdest;
     alert("Start: " + latstart);
     var diff = latend-latstart;
-    //alert(diff);
-    //var diff2=diff - 0.00200
-    //alert(diff2);
-    for(j=1;j<=i;j++){
-    alert("WayPoints: " + waypt_lat[j]);}
+
+    for(j = 1; j <= i;j++) {
+      alert("WayPoints: " + waypt_lat[j]);
+    }
+
     alert("End: " + latend);
   }
 
@@ -215,7 +200,7 @@ lngdest=lng_end;
     var sorted_cordinates = sortCordinatesArray(cordinates);
 
     var hashable_string = "";
-    for (var i = 0; i < sorted_cordinates.length; i++) {
+    for(var i = 0; i < sorted_cordinates.length; i++) {
       hashable_string +=
           "(" + sorted_cordinates[i][0] + "," + sorted_cordinates[i][1] + ")";
     }
@@ -223,18 +208,18 @@ lngdest=lng_end;
     return Crypto.SHA1(hashable_string);
   }
 
-  // Yes it's ugly.
+  // TODO(shlee) Yes it's ugly.
   function sortCordinatesArray(cordinates) {
     var sorted_cordinates = [];
     var original_length = cordinates.length;
 
-    for (var i = 0; i < original_length; i++) {
+    for(var i = 0; i < original_length; i++) {
       var min_index = 0;
-      for (var j = 0; j < cordinates.length; j++) {
-        if (cordinates[min_index][0] > cordinates[j][0]) {
+      for(var j = 0; j < cordinates.length; j++) {
+        if(cordinates[min_index][0] > cordinates[j][0]) {
           min_index = j;
-        } else if (cordinates[min_index][0] == cordinates[j][0]) {
-          if (cordinates[min_index][1] > cordinates[j][1]) {
+        } else if(cordinates[min_index][0] == cordinates[j][0]) {
+          if(cordinates[min_index][1] > cordinates[j][1]) {
             min_index = j;
           }
         }
@@ -253,7 +238,7 @@ lngdest=lng_end;
     var larger = 0;
     var smaller = 0;
 
-    if (x > y) {
+    if(x > y) {
       larger = x;
       smaller = y;
     } else {
@@ -284,7 +269,8 @@ lngdest=lng_end;
     // point new_x, new_y
     var inverted_line_slope = -1 * (1 / line_slope);
     b = new_y - inverted_line_slope * new_x;
-    new_x = randomBetween(new_x, new_x + deviation_range * 2) - deviation_range;
+    new_x = randomBetween(
+        new_x, new_x + deviation_range * 2) - deviation_range;
     new_y = inverted_line_slope * new_x + b;
 
     return [new_x, new_y];
@@ -298,37 +284,19 @@ lngdest=lng_end;
   }
 
   function show_update() {
-  // addRandomWaypoint([10, 10], [0, 0], 1);
-  //alert(latori);
-  //alert(lngori);
-  //alert(latdest);
-  //alert(lngdest);  
-  var new_waypt= addRandomWaypoint([latori, lngori], [latdest, lngdest], 0.01);
-  //alert(new_waypt[0]);
-  //alert(new_waypt[1]);
+    var new_waypt = addRandomWaypoint(
+        [latori, lngori], [latdest, lngdest], 0.01);
     console.log(latori);
     console.log(lngori);
-    
     console.log(latdest);
     console.log(lngdest);
-  console.log(new_waypt[0]);
-  console.log(new_waypt[1]);
-  var myLatlng = new google.maps.LatLng(new_waypt[0],new_waypt[1]);
-  //var myOptions = {
-  //  zoom: 4,
-  //  center: myLatlng,
-  //  mapTypeId: google.maps.MapTypeId.ROADMAP
- // }
- // var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+    console.log(new_waypt[0]);
+    console.log(new_waypt[1]);
+    var myLatlng = new google.maps.LatLng(new_waypt[0],new_waypt[1]);
 
-  //var marker = new google.maps.Marker({
-  //    position: myLatlng,
-  //    map: map,
-  //});
-  
-  waypoints.push({ location: myLatlng, stopover: true });
+    waypoints.push({ location: myLatlng, stopover: true });
 
-  calcRoute();
+    calcRoute();
   }
 </script>
 
@@ -336,30 +304,28 @@ lngdest=lng_end;
 <body onload="initialize()" style="font-family: sans-serif;">
   <table style="width: 400px">
     <tr>
-    	<td><input type="checkbox" id="optimize" checked />Optimize</td>
+      <td><input type="checkbox" id="optimize" checked />Optimize</td>
     </tr>
     <tr>
-      	<td><input type="button" value="Reset" onclick="reset()" /></td>
+      <td><input type="button" value="Reset" onclick="reset()" /></td>
     </tr>
     <tr>
-    	<td><input type="button" onclick="show_update()" value="Pimp MY Route!" /></td>
+      <td><input type="button" onclick="show_update()" value="Pimp MY Route!" /></td>
     </tr>
   </table>
-    
-<div> 
-<strong>Enter Your Location: </strong><br>
-<input type="text" name="start" id="start"  style="width:250px;">
-<input type="hidden" name="latlng_start" id="lat_start" value="-1"/>
-<input type="hidden" name="latlng_start" id="lat_end" value="-1"/>
-<input type="text" name="end" id="end"  style="width:250px;">
-<input type="hidden" name="latlng_end" id="lng_end" value="-1"/>
-<input type="hidden" name="latlng_start" id="lng_start" value="-1"/>
-<input type="button" value="Search" onclick="calcRoute()" />
-</div> 
+  <div>
+    <strong>Enter Your Location: </strong><br>
+    <input type="text" name="start" id="start"  style="width:250px;">
+    <input type="hidden" name="latlng_start" id="lat_start" value="-1"/>
+    <input type="hidden" name="latlng_start" id="lat_end" value="-1"/>
+    <input type="text" name="end" id="end"  style="width:250px;">
+    <input type="hidden" name="latlng_end" id="lng_end" value="-1"/>
+    <input type="hidden" name="latlng_start" id="lng_start" value="-1"/>
+    <input type="button" value="Search" onclick="calcRoute()" />
+  </div>
   <div style="position:relative; border: 1px; width: 1010px; height: 600px;">
     <div id="map_canvas" style="border: 1px solid black; position:absolute; width:798px; height:598px"></div>
     <div id="directionsPanel" style="position:absolute; left: 810px; width:240px; height:600px; overflow: auto"></div>
-
   </div>
 </body>
 </html>
