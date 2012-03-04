@@ -99,7 +99,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'altmap.urls'
 
 TEMPLATE_DIRS = (
-    "/Users/lavince/altmap/templates"
+    "/home/shlee/Source/altmap/templates"
 )
 
 INSTALLED_APPS = (
