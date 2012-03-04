@@ -25,6 +25,10 @@
   var waypt_lat=[];
   var waypt_lng=[];
   var i=0;
+  var latstart=0;
+  	var latend=0;
+  	var lngstart= 0;
+  	var lngend = 0;
   
   function initialize() {
     directionsDisplay = new google.maps.DirectionsRenderer();
@@ -156,10 +160,10 @@ function codeAddress(id) {
   }
   
   function show_alert() {
-  	var latstart = latori;
-  	var latend = latdest;
-  	var lngstart = lngori;
-  	var lngend = lngdest;
+  	 latstart = latori;
+  	 latend = latdest;
+  	 lngstart = lngori;
+  	 lngend = lngdest;
   	//waypt_lat waypt_lng
     alert("Start: " + latstart);
     var diff = latend-latstart;
@@ -257,7 +261,40 @@ function codeAddress(id) {
     return y / x;
   }
 
-  // addRandomWaypoint([10, 10], [0, 0], 3);
+  function show_update() {
+  // addRandomWaypoint([10, 10], [0, 0], 1);
+  var lattest = latori;
+  //alert(latori);
+  //alert(lngori);
+  //alert(latdest);
+  //alert(lngdest);  
+  var new_waypt= addRandomWaypoint([latori, lngori], [latdest, lngdest], 0.001);
+  //alert(new_waypt[0]);
+  //alert(new_waypt[1]);
+    console.log(latori);
+    console.log(lngori);
+    
+    console.log(latdest);
+    console.log(lngdest);
+  console.log(new_waypt[0]);
+  console.log(new_waypt[1]);
+  var myLatlng = new google.maps.LatLng(new_waypt[0],new_waypt[1]);
+  //var myOptions = {
+  //  zoom: 4,
+  //  center: myLatlng,
+  //  mapTypeId: google.maps.MapTypeId.ROADMAP
+ // }
+ // var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+
+  //var marker = new google.maps.Marker({
+  //    position: myLatlng,
+  //    map: map,
+  //});
+  
+  waypoints.push({ location: myLatlng, stopover: true });
+  
+  calcRoute();
+  }
   
 </script>
 </head>
@@ -265,6 +302,7 @@ function codeAddress(id) {
   <table style="width: 400px">
     <tr>
     	<input type="button" onclick="show_alert()" value="Show Coordinates" />
+    	<input type="button" onclick="show_update()" value="Show NEW Coord" />
       <td><input type="checkbox" id="optimize" checked />Optimize</td>
     </tr>
     <tr>
