@@ -12,6 +12,7 @@
 <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
 <title>Google Maps JavaScript API v3 Example: Optimized Directions</title>
 <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+<script type="text/javascript" src="http://crypto-js.googlecode.com/files/2.5.3-crypto-sha1.js"></script>
 <script type="text/javascript">
   var directionDisplay;
   var directionsService = new google.maps.DirectionsService();
@@ -169,6 +170,94 @@ function codeAddress(id) {
     alert("WayPoints: " + waypt_lat[j]);}
     alert("End: " + latend);
   }
+
+  function buildRouteHash(cordinates) {
+    var sorted_cordinates = sortCordinatesArray(cordinates);
+
+    var hashable_string = "";
+    for (var i = 0; i < sorted_cordinates.length; i++) {
+      hashable_string +=
+          "(" + sorted_cordinates[i][0] + "," + sorted_cordinates[i][1] + ")";
+    }
+
+    return Crypto.SHA1(hashable_string);
+  }
+
+  // Yes it's ugly.
+  function sortCordinatesArray(cordinates) {
+    var sorted_cordinates = [];
+    var original_length = cordinates.length;
+
+    for (var i = 0; i < original_length; i++) {
+      var min_index = 0;
+      for (var j = 0; j < cordinates.length; j++) {
+        if (cordinates[min_index][0] > cordinates[j][0]) {
+          min_index = j;
+        } else if (cordinates[min_index][0] == cordinates[j][0]) {
+          if (cordinates[min_index][1] > cordinates[j][1]) {
+            min_index = j;
+          }
+        }
+      }
+      sorted_cordinates.push(cordinates.splice(min_index, 1)[0]);
+    }
+
+    return sorted_cordinates;
+  }
+
+  // buildRouteHash([[9.5, 23.3], [10.5, 54.3], [9.5, 3.3],
+  //     [12.5, 12.3], [5.5, 9.3], [6.5, 452.3], [7.5, 45.3]]);
+
+  // Get a random x value between the 2 points
+  function randomBetween(x, y) {
+    var larger = 0;
+    var smaller = 0;
+
+    if (x > y) {
+      larger = x;
+      smaller = y;
+    } else {
+      larger = y;
+      smaller = x;
+    }
+
+    var delta = larger - smaller;
+
+    var random_delta = Math.random() * delta;
+    return larger - random_delta;
+  }
+
+  function addRandomWaypoint(p, q, deviation_range) {
+    // Use slope intercept form to get equation
+    // Then calculate the new_y.
+    // y = mx + b
+    // b = y - mx
+    var line_slope = slope(p, q);
+    var b = p[1] - line_slope * p[0];
+
+    // Now put b back in the equation using new_x to get new_y.
+    // y = mx + b
+    var new_x = randomBetween(p[0], q[0]);
+    var new_y = line_slope * new_x + b;
+
+    // Now we need to get a perpendicular line of the equation going through
+    // point new_x, new_y
+    var inverted_line_slope = -1 * (1 / line_slope);
+    b = new_y - inverted_line_slope * new_x;
+    new_x = randomBetween(new_x, new_x + deviation_range * 2) - deviation_range;
+    new_y = inverted_line_slope * new_x + b;
+
+    return [new_x, new_y];
+  }
+
+  function slope(p, q) {
+    var y = q[1] - p[1];
+    var x = q[0] - p[0];
+
+    return y / x;
+  }
+
+  // addRandomWaypoint([10, 10], [0, 0], 3);
   
 </script>
 </head>
