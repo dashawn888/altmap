@@ -48,7 +48,7 @@
         latdest = destination.lat();
         lngdest = destination.lng();
         addMarker(destination);
-        alert(latdest);
+        //alert(latdest);
       } else {
         if (waypoints.length < 9) {
           waypoints.push({ location: destination, stopover: true });
@@ -64,7 +64,6 @@
       }
     });
   }
-
 
 function codeAddress(id) {
       var address = document.getElementById(id).value;
@@ -160,30 +159,23 @@ function codeAddress(id) {
   	var latend = latdest;
   	var lngstart = lngori;
   	var lngend = lngdest;
-    alert(latstart);
+  	//waypt_lat waypt_lng
+    alert("Start: " + latstart);
     var diff = latend-latstart;
     //alert(diff);
     //var diff2=diff - 0.00200
     //alert(diff2);
     for(j=1;j<=i;j++){
-    alert(waypt_lat[j]);}
-    alert(latend);
+    alert("WayPoints: " + waypt_lat[j]);}
+    alert("End: " + latend);
   }
   
 </script>
 </head>
 <body onload="initialize()" style="font-family: sans-serif;">
   <table style="width: 400px">
- <tr>
-    <input id="address1" type="textbox" value="">
-    <input type="button" value="Geocode" onclick="codeAddress('address1')">
-  </tr>
-  <tr>
-   <input id="address2" type="textbox" value="">
-   <input type="button" value="Geocode" onclick="codeAddress('address2')">
-  </tr> 
     <tr>
-    	<input type="button" onclick="show_alert()" value="Show alert box" />
+    	<input type="button" onclick="show_alert()" value="Show Coordinates" />
       <td><input type="checkbox" id="optimize" checked />Optimize</td>
     </tr>
     <tr>
