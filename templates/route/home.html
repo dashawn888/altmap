@@ -22,6 +22,7 @@
   var lngstart = 0;
   var lngend = 0;
   var geocoder;
+  var registry = {};
 
   function initialize() {
     directionsDisplay = new google.maps.DirectionsRenderer();
@@ -65,20 +66,38 @@
 
   function getlatlng() {
     var address_start = document.getElementById("start").value;
+
+    registry["lat_start"] = "";
+    registry["lng_start"] = "";
+    registry["lat_end"] = "";
+    registry["lng_end"] = "";
+
     geocoder.geocode({'address': address_start}, function(results, status) {
       if(status == google.maps.GeocoderStatus.OK) {
-        var loc= ParseLocation(results[0].geometry.location);
-        document.getElementById("lat_start").value = loc[0];
-        document.getElementById("lng_start").value = loc[1];
+        var loc = ParseLocation(results[0].geometry.location);
+        // document.getElementById("lat_start").value = loc[0];
+        // document.getElementById("lng_start").value = loc[1];
+        registry["lat_start"] = loc[0];
+        registry["lng_start"] = loc[1];
+
+        if(registry["lat_end"] != "") {
+          drawRoute();
+        }
       }
     });
 
     var address_end = document.getElementById("end").value;
     geocoder.geocode({'address': address_end}, function(results, status) {
       if(status == google.maps.GeocoderStatus.OK) {
-        var loc= ParseLocation(results[0].geometry.location);
-        document.getElementById("lat_end").value = loc[0];
-        document.getElementById("lng_end").value = loc[1];
+        var loc = ParseLocation(results[0].geometry.location);
+        // document.getElementById("lat_end").value = loc[0];
+        // document.getElementById("lng_end").value = loc[1];
+        registry["lat_end"] = loc[0];
+        registry["lng_end"] = loc[1];
+
+        if(registry["lat_start"] != "") {
+          drawRoute();
+        }
       }
     });
   }
@@ -88,7 +107,6 @@
     var lng = location.lng().toString().substr(0, 12);
     return [lat,lng];
   }
-
 
   function addMarker(latlng) {
     markers.push(new google.maps.Marker({
@@ -103,7 +121,7 @@
     var origin = document.getElementById("start").value;
     var destination = document.getElementById("end").value;
 
-    var request = {
+    registry["request"] = {
         origin: origin,
         destination: destination,
         waypoints: waypoints,
@@ -113,33 +131,15 @@
 
     getlatlng(origin);
     getlatlng(destination);
+  }
 
-    var lat_start = "";
-    var lat_end = "";
-    var lng_start = "";
-    var lng_end = "";
+  function drawRoute() {
+    console.log(registry["lat_start"]);
+    console.log(registry["lat_end"]);
+    console.log(registry["lng_start"]);
+    console.log(registry["lng_end"]);
 
-    // TODO(shlee) For the love of GOD fix ME.
-    while(1) {
-      lat_start = document.getElementById("lat_start").value;
-      lat_end = document.getElementById("lat_end").value;
-      lng_start = document.getElementById("lng_start").value;
-      lng_end = document.getElementById("lng_end").value;
-
-      if(lat_start != -1 && lat_end != -1) break;
-    }
-
-    console.log(lat_start);
-    console.log(lat_end);
-    console.log(lng_start);
-    console.log(lng_end);
-
-    latori = lat_start;
-    lngori = lng_start;
-    latdest = lat_end;
-    lngdest = lng_end;
-
-    directionsService.route(request, function(response, status) {
+    directionsService.route(registry["request"], function(response, status) {
       if(status == google.maps.DirectionsStatus.OK) {
         directionsDisplay.setDirections(response);
       }
@@ -285,13 +285,10 @@
 
   function show_update() {
     var new_waypt = addRandomWaypoint(
-        [latori, lngori], [latdest, lngdest], 0.01);
-    console.log(latori);
-    console.log(lngori);
-    console.log(latdest);
-    console.log(lngdest);
-    console.log(new_waypt[0]);
-    console.log(new_waypt[1]);
+        [registry["lat_start"], registry["lng_start"]],
+        [registry["lat_end"], registry["lng_end"]],
+        0.01);
+
     var myLatlng = new google.maps.LatLng(new_waypt[0],new_waypt[1]);
 
     waypoints.push({ location: myLatlng, stopover: true });
