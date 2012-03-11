@@ -1,4 +1,4 @@
-var addMarker, addRandomWaypoint, buildRouteHash, calcRoute, clearMarkers, clearWaypoints, destination, directionsDisplay, directionsService, directionsVisible, drawRoute, geocoder, getLatLng, i, initialize, latend, latstart, lngend, lngstart, map, markers, origin, parseLocation, randomBetween, request, reset, showUpdate, slopeOfLine, sortCordinatesArray, wayPointLat, wayPointLng, waypoints;
+var addMarker, addRandomWaypoint, buildRouteHash, calcRoute, clearMarkers, clearWaypoints, destination, directionsDisplay, directionsService, directionsVisible, drawRoute, geocoder, getLatLng, i, initialize, latend, latstart, lngend, lngstart, map, markers, origin, parseLocation, randomBetween, request, reset, showUpdate, slopeOfLine, sortCordinatesArray, updateMode, wayPointLat, wayPointLng, waypoints;
 
 directionsService = new google.maps.DirectionsService();
 
@@ -128,7 +128,6 @@ addMarker = function(latlng) {
 calcRoute = function() {
   origin = document.getElementById("start").value;
   destination = document.getElementById("end").value;
-  
   request = {
     origin: origin,
     destination: destination,
@@ -236,21 +235,21 @@ slopeOfLine = function(p, q) {
   return y / x;
 };
 
-updateMode =  function() {
-  var travelmode = document.getElementById("travelmode").value;
-  var travel=[];
-// get the selected travel mode
-if (travelmode == "DRIVING")
-   travel = google.maps.DirectionsTravelMode.DRIVING;
-else if (travelmode == "WALKING")
-   travel = google.maps.DirectionsTravelMode.WALKING;
-else if (travelmode == "BICYCLING")
-   travel = google.maps.DirectionsTravelMode.BICYCLING;
-  //console.log(travel);
-   return travel;
+updateMode = function() {
+  var travel, travelmode;
+  travelmode = document.getElementById("travelmode").value;
+  travel = [];
+  if (travelmode === "DRIVING") {
+    travel = google.maps.DirectionsTravelMode.DRIVING;
+  } else if (travelmode === "WALKING") {
+    travel = google.maps.DirectionsTravelMode.WALKING;
+  } else if (travelmode === "BICYCLING") {
+    travel = google.maps.DirectionsTravelMode.BICYCLING;
+  }
+  return travel;
 };
 
-showUpdate = function(travelmode) {
+showUpdate = function() {
   var myLatlng, newWayPoint;
   newWayPoint = addRandomWaypoint([latstart, lngstart], [latend, lngend], 0.01);
   myLatlng = new google.maps.LatLng(newWayPoint[0], newWayPoint[1]);

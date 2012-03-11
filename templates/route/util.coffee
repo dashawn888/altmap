@@ -94,13 +94,12 @@ addMarker = (latlng) ->
 calcRoute = ->
   origin = document.getElementById("start").value
   destination = document.getElementById("end").value
-selectedMode = document.getElementById("mode").value;
 
   request = {
     origin: origin
     destination: destination
     waypoints: waypoints
-    travelMode: google.maps.DirectionsTravelMode[selectedMode]
+    travelMode: updateMode()
     optimizeWaypoints: document.getElementById('optimize').checked
   }
 
@@ -198,6 +197,19 @@ slopeOfLine = (p, q) ->
   x = q[0] - p[0]
 
   return y / x
+
+updateMode = ->
+  travelmode = document.getElementById("travelmode").value
+  travel = []
+  #get the selected travel mode
+  if travelmode == "DRIVING"
+   travel = google.maps.DirectionsTravelMode.DRIVING
+  else if travelmode == "WALKING"
+   travel = google.maps.DirectionsTravelMode.WALKING
+  else if travelmode == "BICYCLING"
+   travel = google.maps.DirectionsTravelMode.BICYCLING
+  #console.log(travel);
+  return travel
 
 showUpdate = ->
   newWayPoint = addRandomWaypoint(
