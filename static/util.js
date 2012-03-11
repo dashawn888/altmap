@@ -128,11 +128,12 @@ addMarker = function(latlng) {
 calcRoute = function() {
   origin = document.getElementById("start").value;
   destination = document.getElementById("end").value;
+  
   request = {
     origin: origin,
     destination: destination,
     waypoints: waypoints,
-    travelMode: google.maps.DirectionsTravelMode.DRIVING,
+    travelMode: updateMode(),
     optimizeWaypoints: document.getElementById('optimize').checked
   };
   getLatLng(origin);
@@ -235,7 +236,21 @@ slopeOfLine = function(p, q) {
   return y / x;
 };
 
-showUpdate = function() {
+updateMode =  function() {
+  var travelmode = document.getElementById("travelmode").value;
+  var travel=[];
+// get the selected travel mode
+if (travelmode == "DRIVING")
+   travel = google.maps.DirectionsTravelMode.DRIVING;
+else if (travelmode == "WALKING")
+   travel = google.maps.DirectionsTravelMode.WALKING;
+else if (travelmode == "BICYCLING")
+   travel = google.maps.DirectionsTravelMode.BICYCLING;
+  //console.log(travel);
+   return travel;
+};
+
+showUpdate = function(travelmode) {
   var myLatlng, newWayPoint;
   newWayPoint = addRandomWaypoint([latstart, lngstart], [latend, lngend], 0.01);
   myLatlng = new google.maps.LatLng(newWayPoint[0], newWayPoint[1]);

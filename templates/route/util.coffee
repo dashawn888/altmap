@@ -94,12 +94,13 @@ addMarker = (latlng) ->
 calcRoute = ->
   origin = document.getElementById("start").value
   destination = document.getElementById("end").value
+selectedMode = document.getElementById("mode").value;
 
   request = {
     origin: origin
     destination: destination
     waypoints: waypoints
-    travelMode: google.maps.DirectionsTravelMode.DRIVING
+    travelMode: google.maps.DirectionsTravelMode[selectedMode]
     optimizeWaypoints: document.getElementById('optimize').checked
   }
 
