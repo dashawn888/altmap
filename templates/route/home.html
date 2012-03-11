@@ -1,328 +1,37 @@
 <html>
-<head>
-<meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
-<title>Alternate My Route!</title>
-<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCRis7n8CCn_G522W7xGxjcHALPbKib2rA&sensor=false">
-<script type="text/javascript" src="http://crypto-js.googlecode.com/files/2.5.3-crypto-sha1.js"></script>
-<script type="text/javascript">
-  var directionDisplay;
-  var directionsService = new google.maps.DirectionsService();
-  var map;
-  var origin = null;
-  var destination = null;
-  var waypoints = [];
-  var markers = [];
-  var directionsVisible = false;
-  var waypt_lat = [];
-  var waypt_lng = [];
-  var i = 0;
-  var latstart = 0;
-  var latend = 0;
-  var lngstart = 0;
-  var lngend = 0;
-  var geocoder;
-  var registry = {};
-
-  function initialize() {
-    directionsDisplay = new google.maps.DirectionsRenderer();
-    var chicago = new google.maps.LatLng(37.7749295, -122.4194155);
-    var myOptions = {
-      zoom: 13,
-      mapTypeId: google.maps.MapTypeId.ROADMAP,
-      center: chicago
-    }
-    map = new google.maps.Map(
-        document.getElementById("map_canvas"), myOptions);
-    directionsDisplay.setMap(map);
-    directionsDisplay.setPanel(document.getElementById("directionsPanel"));
-    geocoder = new google.maps.Geocoder();
-    google.maps.event.addListener(map, 'click', function(event) {
-      if(origin == null) {
-        i = 0;
-        origin = event.latLng;
-        addMarker(origin);
-        latori = origin.lat();
-        lngori = origin.lng();
-      } else if(destination == null) {
-        destination = event.latLng;
-        latdest = destination.lat();
-        lngdest = destination.lng();
-        addMarker(destination);
-      } else {
-        if(waypoints.length < 9) {
-          waypoints.push({ location: destination, stopover: true });
-          destination = event.latLng;
-          i = waypoints.length;
-          waypt_lat[i] = destination.lat();
-          waypt_lng[i] = destination.lng();
-          addMarker(destination);
-        } else {
-          alert("Maximum number of waypoints reached");
-        }
-      }
-    });
-  }
-
-  function getlatlng() {
-    var address_start = document.getElementById("start").value;
-
-    registry["lat_start"] = "";
-    registry["lng_start"] = "";
-    registry["lat_end"] = "";
-    registry["lng_end"] = "";
-
-    geocoder.geocode({'address': address_start}, function(results, status) {
-      if(status == google.maps.GeocoderStatus.OK) {
-        var loc = ParseLocation(results[0].geometry.location);
-        // document.getElementById("lat_start").value = loc[0];
-        // document.getElementById("lng_start").value = loc[1];
-        registry["lat_start"] = loc[0];
-        registry["lng_start"] = loc[1];
-
-        if(registry["lat_end"] != "") {
-          drawRoute();
-        }
-      }
-    });
-
-    var address_end = document.getElementById("end").value;
-    geocoder.geocode({'address': address_end}, function(results, status) {
-      if(status == google.maps.GeocoderStatus.OK) {
-        var loc = ParseLocation(results[0].geometry.location);
-        // document.getElementById("lat_end").value = loc[0];
-        // document.getElementById("lng_end").value = loc[1];
-        registry["lat_end"] = loc[0];
-        registry["lng_end"] = loc[1];
-
-        if(registry["lat_start"] != "") {
-          drawRoute();
-        }
-      }
-    });
-  }
-
-  function ParseLocation(location) {
-    var lat = location.lat().toString().substr(0, 12);
-    var lng = location.lng().toString().substr(0, 12);
-    return [lat,lng];
-  }
-
-  function addMarker(latlng) {
-    markers.push(new google.maps.Marker({
-      position: latlng,
-      map: map,
-      icon: "http://maps.google.com/mapfiles/marker"
-          + String.fromCharCode(markers.length + 65) + ".png"
-    }));
-  }
-
-  function calcRoute() {
-    var origin = document.getElementById("start").value;
-    var destination = document.getElementById("end").value;
-
-    registry["request"] = {
-        origin: origin,
-        destination: destination,
-        waypoints: waypoints,
-        travelMode: google.maps.DirectionsTravelMode.DRIVING,
-        optimizeWaypoints: document.getElementById('optimize').checked,
-    };
-
-    getlatlng(origin);
-    getlatlng(destination);
-  }
-
-  function drawRoute() {
-    console.log(registry["lat_start"]);
-    console.log(registry["lat_end"]);
-    console.log(registry["lng_start"]);
-    console.log(registry["lng_end"]);
-
-    directionsService.route(registry["request"], function(response, status) {
-      if(status == google.maps.DirectionsStatus.OK) {
-        directionsDisplay.setDirections(response);
-      }
-    });
-
-    clearMarkers();
-    directionsVisible = true;
-  }
-
-  function updateMode() {
-    if(directionsVisible) {
-      calcRoute();
-    }
-  }
-
-  function clearMarkers() {
-    for(var i = 0; i < markers.length; i++) {
-      markers[i].setMap(null);
-    }
-  }
-
-  function clearWaypoints() {
-    markers = [];
-    origin = null;
-    destination = null;
-    waypoints = [];
-    directionsVisible = false;
-    waypt_lat = [];
-    waypt_lng = [];
-  }
-
-  function reset() {
-    clearMarkers();
-    clearWaypoints();
-    directionsDisplay.setMap(null);
-    directionsDisplay.setPanel(null);
-    directionsDisplay = new google.maps.DirectionsRenderer();
-    directionsDisplay.setMap(map);
-    directionsDisplay.setPanel(document.getElementById("directionsPanel"));
-  }
-
-  function show_alert() {
-    latstart = latori;
-    latend = latdest;
-    lngstart = lngori;
-    lngend = lngdest;
-    alert("Start: " + latstart);
-    var diff = latend-latstart;
-
-    for(j = 1; j <= i;j++) {
-      alert("WayPoints: " + waypt_lat[j]);
-    }
-
-    alert("End: " + latend);
-  }
-
-  function buildRouteHash(cordinates) {
-    var sorted_cordinates = sortCordinatesArray(cordinates);
-
-    var hashable_string = "";
-    for(var i = 0; i < sorted_cordinates.length; i++) {
-      hashable_string +=
-          "(" + sorted_cordinates[i][0] + "," + sorted_cordinates[i][1] + ")";
-    }
-
-    return Crypto.SHA1(hashable_string);
-  }
-
-  // TODO(shlee) Yes it's ugly.
-  function sortCordinatesArray(cordinates) {
-    var sorted_cordinates = [];
-    var original_length = cordinates.length;
-
-    for(var i = 0; i < original_length; i++) {
-      var min_index = 0;
-      for(var j = 0; j < cordinates.length; j++) {
-        if(cordinates[min_index][0] > cordinates[j][0]) {
-          min_index = j;
-        } else if(cordinates[min_index][0] == cordinates[j][0]) {
-          if(cordinates[min_index][1] > cordinates[j][1]) {
-            min_index = j;
-          }
-        }
-      }
-      sorted_cordinates.push(cordinates.splice(min_index, 1)[0]);
-    }
-
-    return sorted_cordinates;
-  }
-
-  // buildRouteHash([[9.5, 23.3], [10.5, 54.3], [9.5, 3.3],
-  //     [12.5, 12.3], [5.5, 9.3], [6.5, 452.3], [7.5, 45.3]]);
-
-  // Get a random x value between the 2 points
-  function randomBetween(x, y) {
-    var larger = 0;
-    var smaller = 0;
-
-    if(x > y) {
-      larger = x;
-      smaller = y;
-    } else {
-      larger = y;
-      smaller = x;
-    }
-
-    var delta = larger - smaller;
-
-    var random_delta = Math.random() * delta;
-    return larger - random_delta;
-  }
-
-  function addRandomWaypoint(p, q, deviation_range) {
-    // Use slope intercept form to get equation
-    // Then calculate the new_y.
-    // y = mx + b
-    // b = y - mx
-    var line_slope = slope(p, q);
-    var b = p[1] - line_slope * p[0];
-
-    // Now put b back in the equation using new_x to get new_y.
-    // y = mx + b
-    var new_x = randomBetween(p[0], q[0]);
-    var new_y = line_slope * new_x + b;
-
-    // Now we need to get a perpendicular line of the equation going through
-    // point new_x, new_y
-    var inverted_line_slope = -1 * (1 / line_slope);
-    b = new_y - inverted_line_slope * new_x;
-    new_x = randomBetween(
-        new_x, new_x + deviation_range * 2) - deviation_range;
-    new_y = inverted_line_slope * new_x + b;
-
-    return [new_x, new_y];
-  }
-
-  function slope(p, q) {
-    var y = q[1] - p[1];
-    var x = q[0] - p[0];
-
-    return y / x;
-  }
-
-  function show_update() {
-    var new_waypt = addRandomWaypoint(
-        [registry["lat_start"], registry["lng_start"]],
-        [registry["lat_end"], registry["lng_end"]],
-        0.01);
-
-    var myLatlng = new google.maps.LatLng(new_waypt[0],new_waypt[1]);
-
-    waypoints.push({ location: myLatlng, stopover: true });
-
-    calcRoute();
-  }
-</script>
-
-</head>
-<body onload="initialize()" style="font-family: sans-serif;">
-  <table style="width: 400px">
-    <tr>
-      <td><input type="checkbox" id="optimize" checked />Optimize</td>
-    </tr>
-    <tr>
-      <td><input type="button" value="Reset" onclick="reset()" /></td>
-    </tr>
-    <tr>
-      <td><input type="button" onclick="show_update()" value="Pimp MY Route!" /></td>
-    </tr>
-  </table>
-  <div>
-    <strong>Enter Your Location: </strong><br>
-    <input type="text" name="start" id="start"  style="width:250px;">
-    <input type="hidden" name="latlng_start" id="lat_start" value="-1"/>
-    <input type="hidden" name="latlng_start" id="lat_end" value="-1"/>
-    <input type="text" name="end" id="end"  style="width:250px;">
-    <input type="hidden" name="latlng_end" id="lng_end" value="-1"/>
-    <input type="hidden" name="latlng_start" id="lng_start" value="-1"/>
-    <input type="button" value="Search" onclick="calcRoute()" />
-  </div>
-  <div style="position:relative; border: 1px; width: 1010px; height: 600px;">
-    <div id="map_canvas" style="border: 1px solid black; position:absolute; width:798px; height:598px"></div>
-    <div id="directionsPanel" style="position:absolute; left: 810px; width:240px; height:600px; overflow: auto"></div>
-  </div>
-</body>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <title>Alternate My Route!</title>
+    <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCRis7n8CCn_G522W7xGxjcHALPbKib2rA&sensor=false"></script>
+    <script type="text/javascript" src="http://crypto-js.googlecode.com/files/2.5.3-crypto-sha1.js"></script>
+    <script type="text/javascript" src="static/util.js"></script>
+  </head>
+  <body onload="initialize()" style="font-family: sans-serif;">
+    <table style="width: 400px">
+      <tr>
+        <td><input type="checkbox" id="optimize" checked />Optimize</td>
+      </tr>
+      <tr>
+        <td><input type="button" value="Reset" onclick="reset()" /></td>
+      </tr>
+      <tr>
+        <td><input type="button" onclick="showUpdate()" value="Pimp MY Route!" /></td>
+      </tr>
+    </table>
+    <div>
+      <strong>Enter Your Location: </strong><br>
+      <input type="text" name="start" id="start"  style="width:250px;">
+      <input type="hidden" name="latlng_start" id="lat_start" value="-1"/>
+      <input type="hidden" name="latlng_start" id="lat_end" value="-1"/>
+      <input type="text" name="end" id="end"  style="width:250px;">
+      <input type="hidden" name="latlng_end" id="lng_end" value="-1"/>
+      <input type="hidden" name="latlng_start" id="lng_start" value="-1"/>
+      <input type="button" value="Search" onclick="calcRoute()" />
+    </div>
+    <div style="position:relative; border: 1px; width: 1010px; height: 600px;">
+      <div id="map_canvas" style="border: 1px solid black; position:absolute; width:798px; height:598px"></div>
+      <div id="directionsPanel" style="position:absolute; left: 810px; width:240px; height:600px; overflow: auto"></div>
+    </div>
+  </body>
 </html>
