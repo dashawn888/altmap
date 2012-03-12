@@ -19,6 +19,15 @@
         <td><input type="button" onclick="util.showUpdate()" value="Pimp MY Route!" /></td>
       </tr>
     </table>
+  <div>
+<b>Mode of Travel: </b>
+<select id="travelmode" onchange="updateMode();">
+  <option value="DRIVING">Driving</option>
+  <option value="WALKING">Walking</option>
+  <option value="BICYCLING">Bicycling</option>
+</select>
+</div>
+
     <div>
       <strong>Enter Your Location: </strong><br>
       <input type="text" name="start" id="start" style="width:250px;" value="san jose"/>

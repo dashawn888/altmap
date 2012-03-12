@@ -1,4 +1,4 @@
-var addMarker, addRandomWaypoint, buildRouteHash, calcRoute, clearMarkers, clearWaypoints, destination, directionsDisplay, directionsService, directionsVisible, drawRoute, geocoder, getLatLng, i, initialize, latend, latstart, lngend, lngstart, map, markers, origin, parseLocation, randomBetween, request, reset, showUpdate, slopeOfLine, sortCordinatesArray, wayPointLat, wayPointLng, waypoints;
+var addMarker, addRandomWaypoint, buildRouteHash, calcRoute, clearMarkers, clearWaypoints, destination, directionsDisplay, directionsService, directionsVisible, drawRoute, geocoder, getLatLng, i, initialize, latend, latstart, lngend, lngstart, map, markers, origin, parseLocation, randomBetween, request, reset, showUpdate, slopeOfLine, sortCordinatesArray, updateMode, wayPointLat, wayPointLng, waypoints;
 
 directionsService = new google.maps.DirectionsService();
 
@@ -132,7 +132,7 @@ calcRoute = function() {
     origin: origin,
     destination: destination,
     waypoints: waypoints,
-    travelMode: google.maps.DirectionsTravelMode.DRIVING,
+    travelMode: updateMode(),
     optimizeWaypoints: document.getElementById('optimize').checked
   };
   getLatLng(origin);
@@ -233,6 +233,20 @@ slopeOfLine = function(p, q) {
   y = q[1] - p[1];
   x = q[0] - p[0];
   return y / x;
+};
+
+updateMode = function() {
+  var travel, travelmode;
+  travelmode = document.getElementById("travelmode").value;
+  travel = [];
+  if (travelmode === "DRIVING") {
+    travel = google.maps.DirectionsTravelMode.DRIVING;
+  } else if (travelmode === "WALKING") {
+    travel = google.maps.DirectionsTravelMode.WALKING;
+  } else if (travelmode === "BICYCLING") {
+    travel = google.maps.DirectionsTravelMode.BICYCLING;
+  }
+  return travel;
 };
 
 showUpdate = function() {

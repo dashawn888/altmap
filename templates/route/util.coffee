@@ -1,22 +1,20 @@
-util = {
-  addressEnd: null
-  addressStart: null
-  destination: null
-  directionsDisplay: new google.maps.DirectionsRenderer()
-  geocoder: new google.maps.Geocoder()
-  latEnd: 0
-  latStart: 0
-  lngEnd: 0
-  lngStart: 0
-  map: null
-  markers: []
-  origin: null
-  request: null
-  routeDistance: 0
-  wayPointCount: 0
-  wayPointLat: []
-  wayPointLng: []
-  waypoints: []
+directionsService = new google.maps.DirectionsService()
+map = null
+origin = null
+destination = null
+waypoints = []
+markers = []
+directionsVisible = false
+wayPointLat = []
+wayPointLng = []
+i = 0
+latstart = 0
+latend = 0
+lngstart = 0
+lngend = 0
+geocoder = null
+request = null
+directionsDisplay = null
 
   initialize: ->
     chicago = new google.maps.LatLng 37.7749295, -122.4194155
@@ -120,6 +118,9 @@ util = {
     util.getLatLng origin
     util.getLatLng destination
 
+  directionsService.route request, (response, status) ->
+    if status == google.maps.DirectionsStatus.OK
+      directionsDisplay.setDirections response
 
   # This function requires the origin and destination to be set.
   drawRoute: ->
@@ -133,6 +134,14 @@ util = {
       if status == google.maps.DirectionsStatus.OK
         util.directionsDisplay.setDirections response
 
+clearWaypoints = ->
+  markers = []
+  origin = null
+  destination = null
+  waypoints = []
+  directionsVisible = false
+  wayPointLat = []
+  wayPointLng = []
 
     util.clearMarkers()
 
@@ -203,7 +212,17 @@ util = {
     y = q[1] - p[1]
     x = q[0] - p[0]
 
-    return y / x
+  updateMode: ->
+    travelmode = document.getElementById("travelmode").value
+    travel = []
+    #get the selected travel mode
+    if travelmode == "DRIVING"
+     travel = google.maps.DirectionsTravelMode.DRIVING
+    else if travelmode == "WALKING"
+     travel = google.maps.DirectionsTravelMode.WALKING
+    else if travelmode == "BICYCLING"
+     travel = google.maps.DirectionsTravelMode.BICYCLING
+    return travel
 
   showUpdate: ->
     newWayPoint = util.addRandomWaypoint(
