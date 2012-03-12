@@ -7,27 +7,27 @@
     <script type="text/javascript" src="http://crypto-js.googlecode.com/files/2.5.3-crypto-sha1.js"></script>
     <script type="text/javascript" src="static/util.js"></script>
   </head>
-  <body onload="initialize()" style="font-family: sans-serif;">
+  <body onload="util.initialize()" style="font-family: sans-serif;">
     <table style="width: 400px">
       <tr>
         <td><input type="checkbox" id="optimize" checked />Optimize</td>
       </tr>
       <tr>
-        <td><input type="button" value="Reset" onclick="reset()" /></td>
+        <td><input type="button" value="Reset" onclick="util.reset()" /></td>
       </tr>
       <tr>
-        <td><input type="button" onclick="showUpdate()" value="Pimp MY Route!" /></td>
+        <td><input type="button" onclick="util.showUpdate()" value="Pimp MY Route!" /></td>
       </tr>
     </table>
     <div>
       <strong>Enter Your Location: </strong><br>
-      <input type="text" name="start" id="start"  style="width:250px;">
+      <input type="text" name="start" id="start" style="width:250px;" value="san jose"/>
       <input type="hidden" name="latlng_start" id="lat_start" value="-1"/>
       <input type="hidden" name="latlng_start" id="lat_end" value="-1"/>
-      <input type="text" name="end" id="end"  style="width:250px;">
+      <input type="text" name="end" id="end"  style="width:250px;" value="san francisco"/>
       <input type="hidden" name="latlng_end" id="lng_end" value="-1"/>
       <input type="hidden" name="latlng_start" id="lng_start" value="-1"/>
-      <input type="button" value="Search" onclick="calcRoute()" />
+      <input type="button" value="Search" onclick="util.calcRoute()" />
     </div>
     <div style="position:relative; border: 1px; width: 1010px; height: 600px;">
       <div id="map_canvas" style="border: 1px solid black; position:absolute; width:798px; height:598px"></div>

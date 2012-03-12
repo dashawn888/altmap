@@ -1,211 +1,219 @@
-directionsService = new google.maps.DirectionsService()
-map = null
-origin = null
-destination = null
-waypoints = []
-markers = []
-directionsVisible = false
-wayPointLat = []
-wayPointLng = []
-i = 0
-latstart = 0
-latend = 0
-lngstart = 0
-lngend = 0
-geocoder = null
-request = null
-directionsDisplay = null
+util = {
+  addressEnd: null
+  addressStart: null
+  destination: null
+  directionsDisplay: new google.maps.DirectionsRenderer()
+  geocoder: new google.maps.Geocoder()
+  latEnd: 0
+  latStart: 0
+  lngEnd: 0
+  lngStart: 0
+  map: null
+  markers: []
+  origin: null
+  request: null
+  routeDistance: 0
+  wayPointCount: 0
+  wayPointLat: []
+  wayPointLng: []
+  waypoints: []
 
-initialize = ->
-  directionsDisplay = new google.maps.DirectionsRenderer()
-  chicago = new google.maps.LatLng 37.7749295, -122.4194155
-  myOptions =
-    zoom: 13
-    mapTypeId: google.maps.MapTypeId.ROADMAP
-    center: chicago
+  initialize: ->
+    chicago = new google.maps.LatLng 37.7749295, -122.4194155
+    myOptions =
+      zoom: 13
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+      center: chicago
 
-  map = new google.maps.Map document.getElementById("map_canvas"), myOptions
-  directionsDisplay.setMap map
-  directionsDisplay.setPanel document.getElementById("directionsPanel")
-  geocoder = new google.maps.Geocoder()
-  google.maps.event.addListener map, 'click', (event) ->
-    if origin == null
-      i = 0
-      origin = event.latLng
-      addMarker origin
-      latori = origin.lat()
-      lngori = origin.lng()
-    else if destination == null
-      destination = event.latLng
-      latdest = destination.lat()
-      lngdest = destination.lng()
-      addMarker(destination)
-    else
-      if waypoints.length < 9
-        waypoints.push {location: destination, stopover: true}
-        destination = event.latLng
-        i = waypoints.length
-        wayPointLat[i] = destination.lat()
-        wayPointLng[i] = destination.lng()
-        addMarker(destination)
+    util.map = new google.maps.Map document.getElementById("map_canvas"),
+      myOptions
+    util.directionsDisplay.setMap util.map
+    util.directionsDisplay.setPanel document.getElementById("directionsPanel")
+    google.maps.event.addListener util.map, "click", (event) ->
+      if util.origin == null
+        util.wayPointCount = 0
+        util.origin = event.latLng
+        util.addMarker util.origin
+        latori = util.origin.lat()
+        lngori = util.origin.lng()
+      else if util.destination == null
+        util.destination = event.latLng
+        latdest = util.destination.lat()
+        lngdest = util.destination.lng()
+        util.addMarker util.destination
       else
-        alert("Maximum number of waypoints reached");
+        if util.waypoints.length < 9
+          util.waypoints.push {location: util.destination, stopover: true}
+          util.destination = event.latLng
+          util.wayPointCount = util.waypoints.length
+          util.wayPointLat[wayPointCount] = util.destination.lat()
+          util.wayPointLng[wayPointLng] = util.destination.lng()
+          util.addMarker(util.destination)
+        else
+          alert("Maximum number of waypoints reached");
 
-getLatLng = ->
-  addressStart = document.getElementById("start").value
+  getLatLng: ->
+    util.addressStart = document.getElementById("start").value
 
-  latstart = ""
-  lngstart = ""
-  latend = ""
-  lngend = ""
+    util.latStart = ""
+    util.lngStart = ""
+    util.latEnd = ""
+    util.lngEnd = ""
 
-  geocoder.geocode {'address': addressStart}, (results, status) ->
-    if status == google.maps.GeocoderStatus.OK
-      loc = parseLocation results[0].geometry.location
-      latstart = loc[0]
-      lngstart = loc[1]
+    util.geocoder.geocode {address: util.addressStart}, (results, status) ->
+      if status == google.maps.GeocoderStatus.OK
+        loc = util.parseLocation results[0].geometry.location
+        util.latStart = loc[0]
+        util.lngStart = loc[1]
 
-      if latend != ""
-        drawRoute()
+        if util.latEnd != ""
+          util.drawRoute()
 
-  addressEnd = document.getElementById("end").value
-  geocoder.geocode {'address': addressEnd}, (results, status) ->
-    if status == google.maps.GeocoderStatus.OK
-      loc = parseLocation results[0].geometry.location
-      latend = loc[0]
-      lngend = loc[1]
+    util.addressEnd = document.getElementById("end").value
+    util.geocoder.geocode {address: util.addressEnd}, (results, status) ->
+      if status == google.maps.GeocoderStatus.OK
+        loc = util.parseLocation results[0].geometry.location
+        util.latEnd = loc[0]
+        util.lngEnd = loc[1]
 
-      if latstart != ""
-        drawRoute()
+        if util.latStart != ""
+          util.drawRoute()
 
-parseLocation = (location) ->
-  lat = location.lat().toString().substr 0, 12
-  lng = location.lng().toString().substr 0, 12
-  return [lat, lng]
+  getRouteDistance: (origin, destination) ->
+    distanceMatrixService = new google.maps.DistanceMatrixService()
+    distanceMatrixService.getDistanceMatrix {
+      origins: [origin, util.addressStart]
+      destinations: [destination, util.addressEnd]
+      travelMode: google.maps.TravelMode.DRIVING
+      avoidHighways: false
+      avoidTolls: false
+    }, (response, status) ->
+      if status == google.maps.DistanceMatrixStatus.OK
+        return [response.rows[0].elements[0].distance.value,
+            response.rows[0].elements[0].duration.value]
 
-addMarker = (latlng) ->
-  markers.push new google.maps.Marker {
-    position: latlng
-    map: map
-    icon: "http://maps.google.com/mapfiles/marker" +
-        "#{String.fromCharCode markers.length + 65}.png"
-  }
+  parseLocation: (location) ->
+    lat = location.lat().toString().substr 0, 12
+    lng = location.lng().toString().substr 0, 12
+    return [lat, lng]
 
-calcRoute = ->
-  origin = document.getElementById("start").value
-  destination = document.getElementById("end").value
+  addMarker: (latlng) ->
+    util.markers.push new google.maps.Marker {
+      position: latlng
+      map: util.map
+      icon: "http://maps.google.com/mapfiles/marker" +
+          "#{String.fromCharCode util.markers.length + 65}.png"
+    }
 
-  request = {
-    origin: origin
-    destination: destination
-    waypoints: waypoints
-    travelMode: google.maps.DirectionsTravelMode.DRIVING
-    optimizeWaypoints: document.getElementById('optimize').checked
-  }
+  calcRoute: ->
+    origin = document.getElementById("start").value
+    destination = document.getElementById("end").value
 
-  getLatLng origin
-  getLatLng destination
+    util.request = {
+      origin: origin
+      destination: destination
+      waypoints: util.waypoints
+      travelMode: google.maps.DirectionsTravelMode.DRIVING
+      optimizeWaypoints: document.getElementById("optimize").checked
+    }
 
-drawRoute = ->
-  console.log latstart
-  console.log latend
-  console.log lngstart
-  console.log lngend
+    util.getLatLng origin
+    util.getLatLng destination
 
-  directionsService.route request, (response, status) ->
-    if status == google.maps.DirectionsStatus.OK
-      directionsDisplay.setDirections response
 
-  clearMarkers()
-  directionsVisible = true
+  # This function requires the origin and destination to be set.
+  drawRoute: ->
+    console.log util.latStart
+    console.log util.latEnd
+    console.log util.lngStart
+    console.log util.lngEnd
 
-clearMarkers = ->
-  for marker in markers
-    marker.setMap null
+    directionsService = new google.maps.DirectionsService()
+    directionsService.route util.request, (response, status) ->
+      if status == google.maps.DirectionsStatus.OK
+        util.directionsDisplay.setDirections response
 
-clearWaypoints = ->
-  markers = []
-  origin = null
-  destination = null
-  waypoints = []
-  directionsVisible = false
-  wayPointLat = []
-  wayPointLng = []
 
-reset = ->
-  clearMarkers()
-  clearWaypoints()
-  directionsDisplay.setMap null
-  directionsDisplay.setPanel null
-  directionsDisplay = new google.maps.DirectionsRenderer()
-  directionsDisplay.setMap map
-  directionsDisplay.setPanel document.getElementById("directionsPanel")
+    util.clearMarkers()
 
-buildRouteHash = (cordinates) ->
-  sortedCordinates = sortCordinatesArray cordinates
+    util.routeDistance = util.getRouteDistance new google.maps.LatLng(
+      util.latStart, util.lngStart),
+      new google.maps.LatLng(util.latEnd, util.lngEnd)
 
-  hashableString = concat cordinate for cordinate in sortedCordinates
+  clearMarkers: ->
+    for marker in util.markers
+      marker.setMap null
 
-  return Crypto.SHA1 hashableString
+  clearWaypoints: ->
+    util.markers = []
+    util.origin = null
+    util.destination = null
+    util.waypoints = []
+    util.wayPointLat = []
+    util.wayPointLng = []
 
-# TODO(shlee) bring this function over and cleanup.
-sortCordinatesArray = (cordinates) ->
-  sortedCordinates = []
-  originaLength = cordinates.length
+  reset: ->
+    util.clearMarkers()
+    util.clearWaypoints()
+    util.directionsDisplay.setMap null
+    util.directionsDisplay.setPanel null
+    util.directionsDisplay = new google.maps.DirectionsRenderer()
+    util.directionsDisplay.setMap util.map
+    util.directionsDisplay.setPanel document.getElementById("directionsPanel")
 
-randomBetween = (x, y) ->
-  larger = 0
-  smaller = 0
+  buildRouteHash: (cordinates) ->
+    sortedCordinates = util.sortCordinatesArray cordinates
 
-  if x > y
-    larger = x
-    smaller = y
-  else
-    larger = y
-    smaller = x
+    hashableString = concat cordinate for cordinate in sortedCordinates
 
-  delta = larger - smaller
+    return Crypto.SHA1 hashableString
 
-  randomDelta = Math.random() * delta
-  return larger - randomDelta
+  # TODO(shlee) bring this function over and cleanup.
+  sortCordinatesArray:  (cordinates) ->
+    sortedCordinates = []
+    originaLength = cordinates.length
 
-addRandomWaypoint = (p, q, deviationRange) ->
-  # Use slope intercept form to get equation
-  # Then calculate the newY.
-  # y = mx + b
-  # b = y - mx
-  lineSlope = slopeOfLine p, q
-  b = p[1] - lineSlope * p[0]
+  randomBetween: (x, y) ->
+    return Math.random() * Math.abs(x - y) + Math.min(x, y)
 
-  # Now put b back in the equation using newX to get newY.
-  # y = mx + b
-  newX = randomBetween p[0], q[0]
-  newY = lineSlope * newX + b
+  addRandomWaypoint: (p, q, deviationRange) ->
+    # Use slope intercept form to get equation
+    # Then calculate the newY.
+    # y = mx + b
+    # b = y - mx
+    lineSlope = util.slopeOfLine p, q
+    b = p[1] - lineSlope * p[0]
 
-  # Now we need to get a perpendicular line of the equation going through
-  # point newX, newY
-  invertedLineSlope = -1 * (1 / lineSlope)
-  b = newY - invertedLineSlope * newX
-  newX = randomBetween(
-      newX, newX + deviationRange * 2) - deviationRange
-  newY = invertedLineSlope * newX + b
+    # Now put b back in the equation using newX to get newY.
+    # y = mx + b
+    newX = util.randomBetween p[0], q[0]
+    newY = lineSlope * newX + b
 
-  return [newX, newY]
+    # Now we need to get a perpendicular line of the equation going through
+    # point newX, newY
+    invertedLineSlope = -1 * (1 / lineSlope)
+    b = newY - invertedLineSlope * newX
+    newX = util.randomBetween(
+        newX, newX + deviationRange * 2) - deviationRange
+    newY = invertedLineSlope * newX + b
 
-slopeOfLine = (p, q) ->
-  y = q[1] - p[1]
-  x = q[0] - p[0]
+    return [newX, newY]
 
-  return y / x
+  slopeOfLine: (p, q) ->
+    y = q[1] - p[1]
+    x = q[0] - p[0]
 
-showUpdate = ->
-  newWayPoint = addRandomWaypoint(
-      [latstart, lngstart],
-      [latend, lngend],
-      0.01)
+    return y / x
 
-  myLatlng = new google.maps.LatLng newWayPoint[0], newWayPoint[1]
+  showUpdate: ->
+    newWayPoint = util.addRandomWaypoint(
+        [util.latStart, util.lngStart],
+        [util.latEnd, util.lngEnd],
+        0.01)
 
-  waypoints.push { location: myLatlng, stopover: true }
+    myLatlng = new google.maps.LatLng newWayPoint[0], newWayPoint[1]
 
-  calcRoute()
+    util.waypoints.push { location: myLatlng, stopover: true }
+
+    util.calcRoute()
+}
