@@ -1,21 +1,4 @@
-directionsService = new google.maps.DirectionsService()
-map = null
-origin = null
-destination = null
-waypoints = []
-markers = []
-directionsVisible = false
-wayPointLat = []
-wayPointLng = []
-i = 0
-latstart = 0
-latend = 0
-lngstart = 0
-lngend = 0
-geocoder = null
-request = null
-directionsDisplay = null
-
+util = {
   initialize: ->
     chicago = new google.maps.LatLng 37.7749295, -122.4194155
     myOptions =
@@ -23,8 +6,27 @@ directionsDisplay = null
       mapTypeId: google.maps.MapTypeId.ROADMAP
       center: chicago
 
+    util.destination = null
+    util.directionsDisplay = new google.maps.DirectionsRenderer()
+    util.directionsService = new google.maps.DirectionsService()
+    util.directionsVisible = false
+    util.distanceMatrixService = new google.maps.DistanceMatrixService()
+    util.geocoder = new google.maps.Geocoder()
+    util.latEnd = 0
+    util.latStart = 0
+    util.lngEnd = 0
+    util.lngStart = 0
     util.map = new google.maps.Map document.getElementById("map_canvas"),
       myOptions
+    util.markers = []
+    util.origin = null
+    util.request = null
+    util.travelMode = google.maps.TravelMode.DRIVING
+    util.wayPointCount = 0
+    util.wayPointLat = []
+    util.wayPointLng = []
+    util.waypoints = []
+
     util.directionsDisplay.setMap util.map
     util.directionsDisplay.setPanel document.getElementById("directionsPanel")
     google.maps.event.addListener util.map, "click", (event) ->
@@ -78,11 +80,10 @@ directionsDisplay = null
           util.drawRoute()
 
   getRouteDistance: (origin, destination) ->
-    distanceMatrixService = new google.maps.DistanceMatrixService()
-    distanceMatrixService.getDistanceMatrix {
+    util.distanceMatrixService.getDistanceMatrix {
       origins: [origin, util.addressStart]
       destinations: [destination, util.addressEnd]
-      travelMode: google.maps.TravelMode.DRIVING
+      travelMode: util.travelMode
       avoidHighways: false
       avoidTolls: false
     }, (response, status) ->
@@ -111,16 +112,12 @@ directionsDisplay = null
       origin: origin
       destination: destination
       waypoints: util.waypoints
-      travelMode: google.maps.DirectionsTravelMode.DRIVING
+      travelMode: util.travelMode
       optimizeWaypoints: document.getElementById("optimize").checked
     }
 
     util.getLatLng origin
     util.getLatLng destination
-
-  directionsService.route request, (response, status) ->
-    if status == google.maps.DirectionsStatus.OK
-      directionsDisplay.setDirections response
 
   # This function requires the origin and destination to be set.
   drawRoute: ->
@@ -129,46 +126,9 @@ directionsDisplay = null
     console.log util.lngStart
     console.log util.lngEnd
 
-    directionsService = new google.maps.DirectionsService()
-    directionsService.route util.request, (response, status) ->
+    util.directionsService.route util.request, (response, status) ->
       if status == google.maps.DirectionsStatus.OK
         util.directionsDisplay.setDirections response
-
-clearWaypoints = ->
-  markers = []
-  origin = null
-  destination = null
-  waypoints = []
-  directionsVisible = false
-  wayPointLat = []
-  wayPointLng = []
-
-    util.clearMarkers()
-
-    util.routeDistance = util.getRouteDistance new google.maps.LatLng(
-      util.latStart, util.lngStart),
-      new google.maps.LatLng(util.latEnd, util.lngEnd)
-
-  clearMarkers: ->
-    for marker in util.markers
-      marker.setMap null
-
-  clearWaypoints: ->
-    util.markers = []
-    util.origin = null
-    util.destination = null
-    util.waypoints = []
-    util.wayPointLat = []
-    util.wayPointLng = []
-
-  reset: ->
-    util.clearMarkers()
-    util.clearWaypoints()
-    util.directionsDisplay.setMap null
-    util.directionsDisplay.setPanel null
-    util.directionsDisplay = new google.maps.DirectionsRenderer()
-    util.directionsDisplay.setMap util.map
-    util.directionsDisplay.setPanel document.getElementById("directionsPanel")
 
   buildRouteHash: (cordinates) ->
     sortedCordinates = util.sortCordinatesArray cordinates
@@ -186,8 +146,7 @@ clearWaypoints = ->
     return Math.random() * Math.abs(x - y) + Math.min(x, y)
 
   addRandomWaypoint: (p, q, deviationRange) ->
-    # Use slope intercept form to get equation
-    # Then calculate the newY.
+    # Use slope intercept form to get equation. Then calculate the newY.
     # y = mx + b
     # b = y - mx
     lineSlope = util.slopeOfLine p, q
@@ -199,7 +158,7 @@ clearWaypoints = ->
     newY = lineSlope * newX + b
 
     # Now we need to get a perpendicular line of the equation going through
-    # point newX, newY
+    # point newX, newY.
     invertedLineSlope = -1 * (1 / lineSlope)
     b = newY - invertedLineSlope * newX
     newX = util.randomBetween(
@@ -211,18 +170,21 @@ clearWaypoints = ->
   slopeOfLine: (p, q) ->
     y = q[1] - p[1]
     x = q[0] - p[0]
+    return y / x
 
   updateMode: ->
-    travelmode = document.getElementById("travelmode").value
+    mode = document.getElementById("travelmode").value
     travel = []
-    #get the selected travel mode
-    if travelmode == "DRIVING"
-     travel = google.maps.DirectionsTravelMode.DRIVING
-    else if travelmode == "WALKING"
-     travel = google.maps.DirectionsTravelMode.WALKING
-    else if travelmode == "BICYCLING"
-     travel = google.maps.DirectionsTravelMode.BICYCLING
-    return travel
+    # Get the selected travel mode.
+    if mode == "DRIVING"
+     util.travelMode = google.maps.DirectionsTravelMode.DRIVING
+    else if mode == "WALKING"
+     util.travelMode = google.maps.DirectionsTravelMode.WALKING
+    else if mode == "BICYCLING"
+     util.travelMode = google.maps.DirectionsTravelMode.BICYCLING
+
+    util.calcRoute()
+    util.drawRoute()
 
   showUpdate: ->
     newWayPoint = util.addRandomWaypoint(
@@ -230,9 +192,9 @@ clearWaypoints = ->
         [util.latEnd, util.lngEnd],
         0.01)
 
-    myLatlng = new google.maps.LatLng newWayPoint[0], newWayPoint[1]
+    myLatLng = new google.maps.LatLng newWayPoint[0], newWayPoint[1]
 
-    util.waypoints.push { location: myLatlng, stopover: true }
+    util.waypoints.push { location: myLatLng, stopover: true }
 
     util.calcRoute()
 }

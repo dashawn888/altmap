@@ -13,21 +13,20 @@
         <td><input type="checkbox" id="optimize" checked />Optimize</td>
       </tr>
       <tr>
-        <td><input type="button" value="Reset" onclick="util.reset()" /></td>
+        <td><input type="button" value="Reset" onclick="util.initialize()" /></td>
       </tr>
       <tr>
         <td><input type="button" onclick="util.showUpdate()" value="Pimp MY Route!" /></td>
       </tr>
     </table>
-  <div>
-<b>Mode of Travel: </b>
-<select id="travelmode" onchange="updateMode();">
-  <option value="DRIVING">Driving</option>
-  <option value="WALKING">Walking</option>
-  <option value="BICYCLING">Bicycling</option>
-</select>
-</div>
-
+    <div>
+      <b>Mode of Travel: </b>
+      <select id="travelmode" onchange="util.updateMode();">
+        <option value="DRIVING">Driving</option>
+        <option value="WALKING">Walking</option>
+        <option value="BICYCLING">Bicycling</option>
+      </select>
+    </div>
     <div>
       <strong>Enter Your Location: </strong><br>
       <input type="text" name="start" id="start" style="width:250px;" value="san jose"/>
