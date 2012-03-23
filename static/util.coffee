@@ -1,200 +1,338 @@
-util = {
-  initialize: ->
+destination = null
+directionsDisplay = null
+directionsService = null
+directionsVisible = false
+distanceMatrixService = null
+geocoder = null
+latEnd = null
+latStart = null
+lngEnd = null
+lngStart = null
+map = null
+markers = []
+maxDalay = null
+maxDelay = 0
+myOptions = null
+origin = null
+request = null
+routeDistances = []
+travelMode = google.maps.TravelMode.DRIVING
+travelMode = null
+wayPointCount = 0
+wayPointLat = []
+wayPointLng = []
+wayPoints = []
+
+window.util = {}
+
+window.util.init = ->
     chicago = new google.maps.LatLng 37.7749295, -122.4194155
     myOptions =
-      zoom: 13
-      mapTypeId: google.maps.MapTypeId.ROADMAP
-      center: chicago
+        zoom: 13
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+        center: chicago
 
-    util.destination = null
-    util.directionsDisplay = new google.maps.DirectionsRenderer()
-    util.directionsService = new google.maps.DirectionsService()
-    util.directionsVisible = false
-    util.distanceMatrixService = new google.maps.DistanceMatrixService()
-    util.geocoder = new google.maps.Geocoder()
-    util.latEnd = 0
-    util.latStart = 0
-    util.lngEnd = 0
-    util.lngStart = 0
-    util.map = new google.maps.Map document.getElementById("map_canvas"),
-      myOptions
-    util.markers = []
-    util.origin = null
-    util.request = null
-    util.travelMode = google.maps.TravelMode.DRIVING
-    util.wayPointCount = 0
-    util.wayPointLat = []
-    util.wayPointLng = []
-    util.waypoints = []
-
-    util.directionsDisplay.setMap util.map
-    util.directionsDisplay.setPanel document.getElementById("directionsPanel")
-    google.maps.event.addListener util.map, "click", (event) ->
-      if util.origin == null
-        util.wayPointCount = 0
-        util.origin = event.latLng
-        util.addMarker util.origin
-        latori = util.origin.lat()
-        lngori = util.origin.lng()
-      else if util.destination == null
-        util.destination = event.latLng
-        latdest = util.destination.lat()
-        lngdest = util.destination.lng()
-        util.addMarker util.destination
-      else
-        if util.waypoints.length < 9
-          util.waypoints.push {location: util.destination, stopover: true}
-          util.destination = event.latLng
-          util.wayPointCount = util.waypoints.length
-          util.wayPointLat[wayPointCount] = util.destination.lat()
-          util.wayPointLng[wayPointLng] = util.destination.lng()
-          util.addMarker(util.destination)
+    destination = null
+    directionsDisplay = new google.maps.DirectionsRenderer()
+    directionsService = new google.maps.DirectionsService()
+    distanceMatrixService = new google.maps.DistanceMatrixService()
+    directionsVisible = false
+    geocoder = new google.maps.Geocoder()
+    latEnd = 0
+    latStart = 0
+    lngEnd = 0
+    lngStart = 0
+    map = new google.maps.Map document.getElementById("map_canvas"),
+        myOptions
+    markers = []
+    origin = null
+    request = null
+    travelMode = google.maps.TravelMode.DRIVING
+    wayPointCount = 0
+    wayPointLat = []
+    wayPointLng = []
+    wayPoints = []
+    maxDelay = 0
+    routeDistances = []
+    directionsDisplay.setMap map
+    directionsDisplay.setPanel document.getElementById(
+        "directionsPanel")
+    google.maps.event.addListener map, "click", (event) ->
+        if origin == null
+            wayPointCount = 0
+            origin = event.latLng
+            addMarker origin
+            latori = origin.lat()
+            lngori = origin.lng()
+        else if destination == null
+            destination = event.latLng
+            latdest = destination.lat()
+            lngdest = destination.lng()
+            addMarker destination
         else
-          alert("Maximum number of waypoints reached");
+            if wayPoints.length < 9
+                wayPoints.push {
+                    location: destination, stopover: true}
+                destination = event.latLng
+                wayPointCount = wayPoints.length
+                wayPointLat[wayPointCount] = destination.lat()
+                wayPointLng[wayPointLng] = destination.lng()
+                addMarker(destination)
+            else
+                alert("Maximum number of way points reached");
 
-  getLatLng: ->
-    util.addressStart = document.getElementById("start").value
+window.util.setMode = ->
+    mode = document.getElementById("travelmode").value
+    travel = []
+    # Get the selected travel mode.
+    if mode == "DRIVING"
+        travelMode = google.maps.DirectionsTravelMode.DRIVING
+    else if mode == "WALKING"
+        travelMode = google.maps.DirectionsTravelMode.WALKING
+    else if mode == "BICYCLING"
+        travelMode = google.maps.DirectionsTravelMode.BICYCLING
 
-    util.latStart = ""
-    util.lngStart = ""
-    util.latEnd = ""
-    util.lngEnd = ""
+window.util.setDelay = ->
+    maxDelay = document.getElementById("maxdelay").value
 
-    util.geocoder.geocode {address: util.addressStart}, (results, status) ->
-      if status == google.maps.GeocoderStatus.OK
-        loc = util.parseLocation results[0].geometry.location
-        util.latStart = loc[0]
-        util.lngStart = loc[1]
+# This function requires the origin and destination to be set.
+window.util.drawRoute = (wayPointLatLng=null) ->
+    origin = document.getElementById("start").value
+    destination = document.getElementById("end").value
 
-        if util.latEnd != ""
-          util.drawRoute()
+    wayPoints = []    
+    if wayPointLatLng != null
+        wayPoints.push({
+            location: wayPointLatLng
+            stopover: true
+            })
 
-    util.addressEnd = document.getElementById("end").value
-    util.geocoder.geocode {address: util.addressEnd}, (results, status) ->
-      if status == google.maps.GeocoderStatus.OK
-        loc = util.parseLocation results[0].geometry.location
-        util.latEnd = loc[0]
-        util.lngEnd = loc[1]
+    request = {
+        origin: origin
+        destination: destination
+        travelMode: travelMode
+        waypoints: wayPoints
+        avoidHighways: false
+        avoidTolls: false}
+    directionsService.route request, (response, status) ->
+        if status == google.maps.DirectionsStatus.OK
+            directionsDisplay.setDirections response
 
-        if util.latStart != ""
-          util.drawRoute()
+window.util.findRoute = ->
+    origin = document.getElementById("start").value
+    destination = document.getElementById("end").value
+    
+    origin_loc = null
+    destination_loc = null
 
-  getRouteDistance: (origin, destination) ->
-    util.distanceMatrixService.getDistanceMatrix {
-      origins: [origin, util.addressStart]
-      destinations: [destination, util.addressEnd]
-      travelMode: util.travelMode
-      avoidHighways: false
-      avoidTolls: false
-    }, (response, status) ->
-      if status == google.maps.DistanceMatrixStatus.OK
-        return [response.rows[0].elements[0].distance.value,
-            response.rows[0].elements[0].duration.value]
+    withLatLng origin, (loc) ->
+        origin_loc = loc
 
-  parseLocation: (location) ->
+        if destination_loc != null
+            getDestinations origin_loc, destination_loc
+
+    withLatLng destination, (loc) ->
+        destination_loc = loc
+
+        if origin_loc != null
+            getDestinations origin_loc, destination_loc
+
+getDestinations = (origin, destination) ->
+    routes = []
+    originalDistance = null
+    routesFound = 0
+    MAX_ROUTES = 10
+
+    # Get the original route time
+    withRouteDistance(
+        origin,
+        destination,
+        [],
+        (distance, duration, wayPointLatLng) ->
+            originalDistance = distance
+
+            if routesFound == MAX_ROUTES
+                findBest(routes)
+    )
+
+    for _ in [0..MAX_ROUTES]
+        withRandomWayPoint(
+            origin,
+            destination,
+            (wayPoint) -> 
+                withRouteDistance(
+                    origin,
+                    destination,
+                    wayPoint,
+                    (distance, duration, wayPointLatLng) ->
+                        routes.push([wayPointLatLng, distance, duration])
+                        if routesFound == MAX_ROUTES and originalDistance != null
+                            findBest(routes)
+                        else
+                            routesFound += 1
+                )
+        )
+
+# Done with all the exposed functionality.
+findBest = (routes) ->
+    lowestwayPointLatLng = null
+    lowestDuration = null
+
+    for route in routes
+        wayPointLatLng = route[0]
+        distance = route[1]
+        duration = route[2]
+
+        if lowestwayPointLatLng == null or duration < lowestDuration
+            lowestwayPointLatLng = wayPointLatLng
+            lowestDuration = duration
+
+    window.util.drawRoute lowestwayPointLatLng
+
+withLatLng = (address, func) ->
+    geocoder.geocode {address: address}, (results, status) ->
+        if status == google.maps.GeocoderStatus.OK
+            loc = parseLocation results[0].geometry.location
+            func(loc)
+
+withRouteDistance = (origin, destination, wayPoint, func) ->
+    originLatLng = new google.maps.LatLng(origin[0], origin[1])
+    destinationLatLng = new google.maps.LatLng(destination[0], destination[1])
+    wayPointLatLng = new google.maps.LatLng(wayPoint[0], wayPoint[1])
+
+    # The distanceMatrixService measures the driving distance between 2 points.
+    # With a wayPoint you have to calculate the distance twice.  Between origin
+    # to wayPoint and wayPoint to Destination.  Then you sum them together to
+    # get the total time.
+    if wayPoint.length != 2
+        distanceMatrixService.getDistanceMatrix {
+            origins: [originLatLng]
+            destinations: [destinationLatLng]
+            travelMode: travelMode
+            avoidHighways: false
+            avoidTolls: false}, 
+            (response, status) ->
+                if status == google.maps.DistanceMatrixStatus.OK
+                    func(
+                        response.rows[0].elements[0].distance.value,
+                        response.rows[0].elements[0].duration.value,
+                        wayPointLatLng)
+                else
+                    console.log("DistanceMatrixStatus FAIL")
+    else
+        originToWayPoint = null
+        wayPointToDestination = null
+
+        distanceMatrixService.getDistanceMatrix {
+            origins: [originLatLng]
+            destinations: [wayPointLatLng]
+            travelMode: travelMode
+            avoidHighways: false
+            avoidTolls: false}, 
+            (response, status) ->
+                if status == google.maps.DistanceMatrixStatus.OK
+                    originToWayPoint = [
+                        response.rows[0].elements[0].distance.value,
+                        response.rows[0].elements[0].duration.value]
+
+                    if wayPointToDestination != null
+                        func(
+                            originToWayPoint[0] + wayPointToDestination[0], 
+                            originToWayPoint[1] + wayPointToDestination[1],
+                            wayPointLatLng)
+                else
+                    console.log("DistanceMatrixStatus FAIL")
+        
+        distanceMatrixService.getDistanceMatrix {
+            origins: [wayPointLatLng]
+            destinations: [destinationLatLng]
+            travelMode: travelMode
+            avoidHighways: false
+            avoidTolls: false}, 
+            (response, status) ->
+                if status == google.maps.DistanceMatrixStatus.OK
+                    wayPointToDestination = [
+                        response.rows[0].elements[0].distance.value,
+                        response.rows[0].elements[0].duration.value]
+
+                    if originToWayPoint != null
+                        func(
+                            originToWayPoint[0] + wayPointToDestination[0], 
+                            originToWayPoint[1] + wayPointToDestination[1],
+                            wayPointLatLng)
+                else
+                    console.log("DistanceMatrixStatus FAIL")
+
+parseLocation = (location) ->
     lat = location.lat().toString().substr 0, 12
     lng = location.lng().toString().substr 0, 12
     return [lat, lng]
 
-  addMarker: (latlng) ->
-    util.markers.push new google.maps.Marker {
+addMarker = (latlng) ->
+    markers.push new google.maps.Marker {
       position: latlng
-      map: util.map
+      map: map
       icon: "http://maps.google.com/mapfiles/marker" +
-          "#{String.fromCharCode util.markers.length + 65}.png"
+          "#{String.fromCharCode markers.length + 65}.png"
     }
 
-  calcRoute: ->
-    origin = document.getElementById("start").value
-    destination = document.getElementById("end").value
+withRoute = (origin, destination, func, wayPoints=null) ->
+    if wayPoints == null
+        wayPoints = []
 
-    util.request = {
-      origin: origin
-      destination: destination
-      waypoints: util.waypoints
-      travelMode: util.travelMode
-      optimizeWaypoints: document.getElementById("optimize").checked
+    request = {
+        origin: origin
+        destination: destination
+        waypoints: wayPoints
+        travelMode: travelMode
+        optimizeWaypoints: document.getElementById("optimize").checked
     }
 
-    util.getLatLng origin
-    util.getLatLng destination
+    latStart = ""
+    lngStart = ""
+    latEnd = ""
+    lngEnd = ""
 
-  # This function requires the origin and destination to be set.
-  drawRoute: ->
-    console.log util.latStart
-    console.log util.latEnd
-    console.log util.lngStart
-    console.log util.lngEnd
+    withLatLng origin, (loc) ->
+        latStart = loc[0]
+        lngStart = loc[1]
 
-    util.directionsService.route util.request, (response, status) ->
-      if status == google.maps.DirectionsStatus.OK
-        util.directionsDisplay.setDirections response
+        if latEnd != ""
+            func()
 
-  buildRouteHash: (cordinates) ->
-    sortedCordinates = util.sortCordinatesArray cordinates
+    withLatLng destination, (loc) ->
+        latEnd = loc[0]
+        lngEnd = loc[1]
 
-    hashableString = concat cordinate for cordinate in sortedCordinates
+        if latStart != ""
+            func()
 
-    return Crypto.SHA1 hashableString
+randomBetween = (x, y) ->
+   return Math.random() * Math.abs(x - y) + Math.min(x, y)
 
-  # TODO(shlee) bring this function over and cleanup.
-  sortCordinatesArray:  (cordinates) ->
-    sortedCordinates = []
-    originaLength = cordinates.length
-
-  randomBetween: (x, y) ->
-    return Math.random() * Math.abs(x - y) + Math.min(x, y)
-
-  addRandomWaypoint: (p, q, deviationRange) ->
+withRandomWayPoint = (origin, destination, func) ->
     # Use slope intercept form to get equation. Then calculate the newY.
     # y = mx + b
     # b = y - mx
-    lineSlope = util.slopeOfLine p, q
-    b = p[1] - lineSlope * p[0]
+    lineSlope = slopeOfLine origin, destination
+    b = origin[1] - lineSlope * origin[0]
 
     # Now put b back in the equation using newX to get newY.
     # y = mx + b
-    newX = util.randomBetween p[0], q[0]
+    newX = randomBetween origin[0], destination[0]
     newY = lineSlope * newX + b
 
     # Now we need to get a perpendicular line of the equation going through
     # point newX, newY.
     invertedLineSlope = -1 * (1 / lineSlope)
     b = newY - invertedLineSlope * newX
-    newX = util.randomBetween(
-        newX, newX + deviationRange * 2) - deviationRange
+    newX = randomBetween(
+        newX, newX + 0.1 * 2) - 0.1
     newY = invertedLineSlope * newX + b
 
-    return [newX, newY]
+    func([newX, newY])
 
-  slopeOfLine: (p, q) ->
+slopeOfLine = (p, q) ->
     y = q[1] - p[1]
     x = q[0] - p[0]
     return y / x
-
-  updateMode: ->
-    mode = document.getElementById("travelmode").value
-    travel = []
-    # Get the selected travel mode.
-    if mode == "DRIVING"
-     util.travelMode = google.maps.DirectionsTravelMode.DRIVING
-    else if mode == "WALKING"
-     util.travelMode = google.maps.DirectionsTravelMode.WALKING
-    else if mode == "BICYCLING"
-     util.travelMode = google.maps.DirectionsTravelMode.BICYCLING
-
-    util.calcRoute()
-    util.drawRoute()
-
-  showUpdate: ->
-    newWayPoint = util.addRandomWaypoint(
-        [util.latStart, util.lngStart],
-        [util.latEnd, util.lngEnd],
-        0.01)
-
-    myLatLng = new google.maps.LatLng newWayPoint[0], newWayPoint[1]
-
-    util.waypoints.push { location: myLatLng, stopover: true }
-
-    util.calcRoute()
-}

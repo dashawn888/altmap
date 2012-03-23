@@ -1,261 +1,354 @@
-var addMarker, addRandomWaypoint, buildRouteHash, calcRoute, clearMarkers, clearWaypoints, destination, directionsDisplay, directionsService, directionsVisible, drawRoute, geocoder, getLatLng, i, initialize, latend, latstart, lngend, lngstart, map, markers, origin, parseLocation, randomBetween, request, reset, showUpdate, slopeOfLine, sortCordinatesArray, updateMode, wayPointLat, wayPointLng, waypoints;
+(function() {
+  var addMarker, destination, directionsDisplay, directionsService, directionsVisible, distanceMatrixService, findBest, geocoder, getDestinations, latEnd, latStart, lngEnd, lngStart, map, markers, maxDalay, maxDelay, myOptions, origin, parseLocation, randomBetween, request, routeDistances, slopeOfLine, travelMode, wayPointCount, wayPointLat, wayPointLng, wayPoints, withLatLng, withRandomWayPoint, withRoute, withRouteDistance;
 
-directionsService = new google.maps.DirectionsService();
+  destination = null;
 
-map = null;
+  directionsDisplay = null;
 
-origin = null;
+  directionsService = null;
 
-destination = null;
+  directionsVisible = false;
 
-waypoints = [];
+  distanceMatrixService = null;
 
-markers = [];
+  geocoder = null;
 
-directionsVisible = false;
+  latEnd = null;
 
-wayPointLat = [];
+  latStart = null;
 
-wayPointLng = [];
+  lngEnd = null;
 
-i = 0;
+  lngStart = null;
 
-latstart = 0;
+  map = null;
 
-latend = 0;
+  markers = [];
 
-lngstart = 0;
+  maxDalay = null;
 
-lngend = 0;
+  maxDelay = 0;
 
-geocoder = null;
+  myOptions = null;
 
-request = null;
+  origin = null;
 
-directionsDisplay = null;
+  request = null;
 
-initialize = function() {
-  var chicago, myOptions;
-  directionsDisplay = new google.maps.DirectionsRenderer();
-  chicago = new google.maps.LatLng(37.7749295, -122.4194155);
-  myOptions = {
-    zoom: 13,
-    mapTypeId: google.maps.MapTypeId.ROADMAP,
-    center: chicago
-  };
-  map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-  directionsDisplay.setMap(map);
-  directionsDisplay.setPanel(document.getElementById("directionsPanel"));
-  geocoder = new google.maps.Geocoder();
-  return google.maps.event.addListener(map, 'click', function(event) {
-    var latdest, latori, lngdest, lngori;
-    if (origin === null) {
-      i = 0;
-      origin = event.latLng;
-      addMarker(origin);
-      latori = origin.lat();
-      return lngori = origin.lng();
-    } else if (destination === null) {
-      destination = event.latLng;
-      latdest = destination.lat();
-      lngdest = destination.lng();
-      return addMarker(destination);
-    } else {
-      if (waypoints.length < 9) {
-        waypoints.push({
-          location: destination,
-          stopover: true
-        });
+  routeDistances = [];
+
+  travelMode = google.maps.TravelMode.DRIVING;
+
+  travelMode = null;
+
+  wayPointCount = 0;
+
+  wayPointLat = [];
+
+  wayPointLng = [];
+
+  wayPoints = [];
+
+  window.util = {};
+
+  window.util.init = function() {
+    var chicago;
+    chicago = new google.maps.LatLng(37.7749295, -122.4194155);
+    myOptions = {
+      zoom: 13,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      center: chicago
+    };
+    destination = null;
+    directionsDisplay = new google.maps.DirectionsRenderer();
+    directionsService = new google.maps.DirectionsService();
+    distanceMatrixService = new google.maps.DistanceMatrixService();
+    directionsVisible = false;
+    geocoder = new google.maps.Geocoder();
+    latEnd = 0;
+    latStart = 0;
+    lngEnd = 0;
+    lngStart = 0;
+    map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+    markers = [];
+    origin = null;
+    request = null;
+    travelMode = google.maps.TravelMode.DRIVING;
+    wayPointCount = 0;
+    wayPointLat = [];
+    wayPointLng = [];
+    wayPoints = [];
+    maxDelay = 0;
+    routeDistances = [];
+    directionsDisplay.setMap(map);
+    directionsDisplay.setPanel(document.getElementById("directionsPanel"));
+    return google.maps.event.addListener(map, "click", function(event) {
+      var latdest, latori, lngdest, lngori;
+      if (origin === null) {
+        wayPointCount = 0;
+        origin = event.latLng;
+        addMarker(origin);
+        latori = origin.lat();
+        return lngori = origin.lng();
+      } else if (destination === null) {
         destination = event.latLng;
-        i = waypoints.length;
-        wayPointLat[i] = destination.lat();
-        wayPointLng[i] = destination.lng();
+        latdest = destination.lat();
+        lngdest = destination.lng();
         return addMarker(destination);
       } else {
-        return alert("Maximum number of waypoints reached");
+        if (wayPoints.length < 9) {
+          wayPoints.push({
+            location: destination,
+            stopover: true
+          });
+          destination = event.latLng;
+          wayPointCount = wayPoints.length;
+          wayPointLat[wayPointCount] = destination.lat();
+          wayPointLng[wayPointLng] = destination.lng();
+          return addMarker(destination);
+        } else {
+          return alert("Maximum number of way points reached");
+        }
+      }
+    });
+  };
+
+  window.util.setMode = function() {
+    var mode, travel;
+    mode = document.getElementById("travelmode").value;
+    travel = [];
+    if (mode === "DRIVING") {
+      return travelMode = google.maps.DirectionsTravelMode.DRIVING;
+    } else if (mode === "WALKING") {
+      return travelMode = google.maps.DirectionsTravelMode.WALKING;
+    } else if (mode === "BICYCLING") {
+      return travelMode = google.maps.DirectionsTravelMode.BICYCLING;
+    }
+  };
+
+  window.util.setDelay = function() {
+    return maxDelay = document.getElementById("maxdelay").value;
+  };
+
+  window.util.drawRoute = function(wayPointLatLng) {
+    if (wayPointLatLng == null) wayPointLatLng = null;
+    origin = document.getElementById("start").value;
+    destination = document.getElementById("end").value;
+    wayPoints = [];
+    if (wayPointLatLng !== null) {
+      wayPoints.push({
+        location: wayPointLatLng,
+        stopover: true
+      });
+    }
+    request = {
+      origin: origin,
+      destination: destination,
+      travelMode: travelMode,
+      waypoints: wayPoints,
+      avoidHighways: false,
+      avoidTolls: false
+    };
+    return directionsService.route(request, function(response, status) {
+      if (status === google.maps.DirectionsStatus.OK) {
+        return directionsDisplay.setDirections(response);
+      }
+    });
+  };
+
+  window.util.findRoute = function() {
+    var destination_loc, origin_loc;
+    origin = document.getElementById("start").value;
+    destination = document.getElementById("end").value;
+    origin_loc = null;
+    destination_loc = null;
+    withLatLng(origin, function(loc) {
+      origin_loc = loc;
+      if (destination_loc !== null) {
+        return getDestinations(origin_loc, destination_loc);
+      }
+    });
+    return withLatLng(destination, function(loc) {
+      destination_loc = loc;
+      if (origin_loc !== null) return getDestinations(origin_loc, destination_loc);
+    });
+  };
+
+  getDestinations = function(origin, destination) {
+    var MAX_ROUTES, originalDistance, routes, routesFound, _, _results;
+    routes = [];
+    originalDistance = null;
+    routesFound = 0;
+    MAX_ROUTES = 10;
+    withRouteDistance(origin, destination, [], function(distance, duration, wayPointLatLng) {
+      originalDistance = distance;
+      if (routesFound === MAX_ROUTES) return findBest(routes);
+    });
+    _results = [];
+    for (_ = 0; 0 <= MAX_ROUTES ? _ <= MAX_ROUTES : _ >= MAX_ROUTES; 0 <= MAX_ROUTES ? _++ : _--) {
+      _results.push(withRandomWayPoint(origin, destination, function(wayPoint) {
+        return withRouteDistance(origin, destination, wayPoint, function(distance, duration, wayPointLatLng) {
+          routes.push([wayPointLatLng, distance, duration]);
+          if (routesFound === MAX_ROUTES && originalDistance !== null) {
+            return findBest(routes);
+          } else {
+            return routesFound += 1;
+          }
+        });
+      }));
+    }
+    return _results;
+  };
+
+  findBest = function(routes) {
+    var distance, duration, lowestDuration, lowestwayPointLatLng, route, wayPointLatLng, _i, _len;
+    lowestwayPointLatLng = null;
+    lowestDuration = null;
+    for (_i = 0, _len = routes.length; _i < _len; _i++) {
+      route = routes[_i];
+      wayPointLatLng = route[0];
+      distance = route[1];
+      duration = route[2];
+      if (lowestwayPointLatLng === null || duration < lowestDuration) {
+        lowestwayPointLatLng = wayPointLatLng;
+        lowestDuration = duration;
       }
     }
-  });
-};
-
-getLatLng = function() {
-  var addressEnd, addressStart;
-  addressStart = document.getElementById("start").value;
-  latstart = "";
-  lngstart = "";
-  latend = "";
-  lngend = "";
-  geocoder.geocode({
-    'address': addressStart
-  }, function(results, status) {
-    var loc;
-    if (status === google.maps.GeocoderStatus.OK) {
-      loc = parseLocation(results[0].geometry.location);
-      latstart = loc[0];
-      lngstart = loc[1];
-      if (latend !== "") return drawRoute();
-    }
-  });
-  addressEnd = document.getElementById("end").value;
-  return geocoder.geocode({
-    'address': addressEnd
-  }, function(results, status) {
-    var loc;
-    if (status === google.maps.GeocoderStatus.OK) {
-      loc = parseLocation(results[0].geometry.location);
-      latend = loc[0];
-      lngend = loc[1];
-      if (latstart !== "") return drawRoute();
-    }
-  });
-};
-
-parseLocation = function(location) {
-  var lat, lng;
-  lat = location.lat().toString().substr(0, 12);
-  lng = location.lng().toString().substr(0, 12);
-  return [lat, lng];
-};
-
-addMarker = function(latlng) {
-  return markers.push(new google.maps.Marker({
-    position: latlng,
-    map: map,
-    icon: "http://maps.google.com/mapfiles/marker" + ("" + (String.fromCharCode(markers.length + 65)) + ".png")
-  }));
-};
-
-calcRoute = function() {
-  origin = document.getElementById("start").value;
-  destination = document.getElementById("end").value;
-  request = {
-    origin: origin,
-    destination: destination,
-    waypoints: waypoints,
-    travelMode: updateMode(),
-    optimizeWaypoints: document.getElementById('optimize').checked
+    return window.util.drawRoute(lowestwayPointLatLng);
   };
-  getLatLng(origin);
-  return getLatLng(destination);
-};
 
-drawRoute = function() {
-  console.log(latstart);
-  console.log(latend);
-  console.log(lngstart);
-  console.log(lngend);
-  directionsService.route(request, function(response, status) {
-    if (status === google.maps.DirectionsStatus.OK) {
-      return directionsDisplay.setDirections(response);
+  withLatLng = function(address, func) {
+    return geocoder.geocode({
+      address: address
+    }, function(results, status) {
+      var loc;
+      if (status === google.maps.GeocoderStatus.OK) {
+        loc = parseLocation(results[0].geometry.location);
+        return func(loc);
+      }
+    });
+  };
+
+  withRouteDistance = function(origin, destination, wayPoint, func) {
+    var destinationLatLng, originLatLng, originToWayPoint, wayPointLatLng, wayPointToDestination;
+    originLatLng = new google.maps.LatLng(origin[0], origin[1]);
+    destinationLatLng = new google.maps.LatLng(destination[0], destination[1]);
+    wayPointLatLng = new google.maps.LatLng(wayPoint[0], wayPoint[1]);
+    if (wayPoint.length !== 2) {
+      return distanceMatrixService.getDistanceMatrix({
+        origins: [originLatLng],
+        destinations: [destinationLatLng],
+        travelMode: travelMode,
+        avoidHighways: false,
+        avoidTolls: false
+      }, function(response, status) {
+        if (status === google.maps.DistanceMatrixStatus.OK) {
+          return func(response.rows[0].elements[0].distance.value, response.rows[0].elements[0].duration.value, wayPointLatLng);
+        } else {
+          return console.log("DistanceMatrixStatus FAIL");
+        }
+      });
+    } else {
+      originToWayPoint = null;
+      wayPointToDestination = null;
+      distanceMatrixService.getDistanceMatrix({
+        origins: [originLatLng],
+        destinations: [wayPointLatLng],
+        travelMode: travelMode,
+        avoidHighways: false,
+        avoidTolls: false
+      }, function(response, status) {
+        if (status === google.maps.DistanceMatrixStatus.OK) {
+          originToWayPoint = [response.rows[0].elements[0].distance.value, response.rows[0].elements[0].duration.value];
+          if (wayPointToDestination !== null) {
+            return func(originToWayPoint[0] + wayPointToDestination[0], originToWayPoint[1] + wayPointToDestination[1], wayPointLatLng);
+          }
+        } else {
+          return console.log("DistanceMatrixStatus FAIL");
+        }
+      });
+      return distanceMatrixService.getDistanceMatrix({
+        origins: [wayPointLatLng],
+        destinations: [destinationLatLng],
+        travelMode: travelMode,
+        avoidHighways: false,
+        avoidTolls: false
+      }, function(response, status) {
+        if (status === google.maps.DistanceMatrixStatus.OK) {
+          wayPointToDestination = [response.rows[0].elements[0].distance.value, response.rows[0].elements[0].duration.value];
+          if (originToWayPoint !== null) {
+            return func(originToWayPoint[0] + wayPointToDestination[0], originToWayPoint[1] + wayPointToDestination[1], wayPointLatLng);
+          }
+        } else {
+          return console.log("DistanceMatrixStatus FAIL");
+        }
+      });
     }
-  });
-  clearMarkers();
-  return directionsVisible = true;
-};
+  };
 
-clearMarkers = function() {
-  var marker, _i, _len, _results;
-  _results = [];
-  for (_i = 0, _len = markers.length; _i < _len; _i++) {
-    marker = markers[_i];
-    _results.push(marker.setMap(null));
-  }
-  return _results;
-};
+  parseLocation = function(location) {
+    var lat, lng;
+    lat = location.lat().toString().substr(0, 12);
+    lng = location.lng().toString().substr(0, 12);
+    return [lat, lng];
+  };
 
-clearWaypoints = function() {
-  markers = [];
-  origin = null;
-  destination = null;
-  waypoints = [];
-  directionsVisible = false;
-  wayPointLat = [];
-  return wayPointLng = [];
-};
+  addMarker = function(latlng) {
+    return markers.push(new google.maps.Marker({
+      position: latlng,
+      map: map,
+      icon: "http://maps.google.com/mapfiles/marker" + ("" + (String.fromCharCode(markers.length + 65)) + ".png")
+    }));
+  };
 
-reset = function() {
-  clearMarkers();
-  clearWaypoints();
-  directionsDisplay.setMap(null);
-  directionsDisplay.setPanel(null);
-  directionsDisplay = new google.maps.DirectionsRenderer();
-  directionsDisplay.setMap(map);
-  return directionsDisplay.setPanel(document.getElementById("directionsPanel"));
-};
+  withRoute = function(origin, destination, func, wayPoints) {
+    if (wayPoints == null) wayPoints = null;
+    if (wayPoints === null) wayPoints = [];
+    request = {
+      origin: origin,
+      destination: destination,
+      waypoints: wayPoints,
+      travelMode: travelMode,
+      optimizeWaypoints: document.getElementById("optimize").checked
+    };
+    latStart = "";
+    lngStart = "";
+    latEnd = "";
+    lngEnd = "";
+    withLatLng(origin, function(loc) {
+      latStart = loc[0];
+      lngStart = loc[1];
+      if (latEnd !== "") return func();
+    });
+    return withLatLng(destination, function(loc) {
+      latEnd = loc[0];
+      lngEnd = loc[1];
+      if (latStart !== "") return func();
+    });
+  };
 
-buildRouteHash = function(cordinates) {
-  var cordinate, hashableString, sortedCordinates, _i, _len;
-  sortedCordinates = sortCordinatesArray(cordinates);
-  for (_i = 0, _len = sortedCordinates.length; _i < _len; _i++) {
-    cordinate = sortedCordinates[_i];
-    hashableString = concat(cordinate);
-  }
-  return Crypto.SHA1(hashableString);
-};
+  randomBetween = function(x, y) {
+    return Math.random() * Math.abs(x - y) + Math.min(x, y);
+  };
 
-sortCordinatesArray = function(cordinates) {
-  var originaLength, sortedCordinates;
-  sortedCordinates = [];
-  return originaLength = cordinates.length;
-};
+  withRandomWayPoint = function(origin, destination, func) {
+    var b, invertedLineSlope, lineSlope, newX, newY;
+    lineSlope = slopeOfLine(origin, destination);
+    b = origin[1] - lineSlope * origin[0];
+    newX = randomBetween(origin[0], destination[0]);
+    newY = lineSlope * newX + b;
+    invertedLineSlope = -1 * (1 / lineSlope);
+    b = newY - invertedLineSlope * newX;
+    newX = randomBetween(newX, newX + 0.1 * 2) - 0.1;
+    newY = invertedLineSlope * newX + b;
+    return func([newX, newY]);
+  };
 
-randomBetween = function(x, y) {
-  var delta, larger, randomDelta, smaller;
-  larger = 0;
-  smaller = 0;
-  if (x > y) {
-    larger = x;
-    smaller = y;
-  } else {
-    larger = y;
-    smaller = x;
-  }
-  delta = larger - smaller;
-  randomDelta = Math.random() * delta;
-  return larger - randomDelta;
-};
+  slopeOfLine = function(p, q) {
+    var x, y;
+    y = q[1] - p[1];
+    x = q[0] - p[0];
+    return y / x;
+  };
 
-addRandomWaypoint = function(p, q, deviationRange) {
-  var b, invertedLineSlope, lineSlope, newX, newY;
-  lineSlope = slopeOfLine(p, q);
-  b = p[1] - lineSlope * p[0];
-  newX = randomBetween(p[0], q[0]);
-  newY = lineSlope * newX + b;
-  invertedLineSlope = -1 * (1 / lineSlope);
-  b = newY - invertedLineSlope * newX;
-  newX = randomBetween(newX, newX + deviationRange * 2) - deviationRange;
-  newY = invertedLineSlope * newX + b;
-  return [newX, newY];
-};
-
-slopeOfLine = function(p, q) {
-  var x, y;
-  y = q[1] - p[1];
-  x = q[0] - p[0];
-  return y / x;
-};
-
-updateMode = function() {
-  var travel, travelmode;
-  travelmode = document.getElementById("travelmode").value;
-  travel = [];
-  if (travelmode === "DRIVING") {
-    travel = google.maps.DirectionsTravelMode.DRIVING;
-  } else if (travelmode === "WALKING") {
-    travel = google.maps.DirectionsTravelMode.WALKING;
-  } else if (travelmode === "BICYCLING") {
-    travel = google.maps.DirectionsTravelMode.BICYCLING;
-  }
-  return travel;
-};
-
-showUpdate = function() {
-  var myLatlng, newWayPoint;
-  newWayPoint = addRandomWaypoint([latstart, lngstart], [latend, lngend], 0.01);
-  myLatlng = new google.maps.LatLng(newWayPoint[0], newWayPoint[1]);
-  waypoints.push({
-    location: myLatlng,
-    stopover: true
-  });
-  return calcRoute();
-};
+}).call(this);
