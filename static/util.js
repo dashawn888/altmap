@@ -1,5 +1,5 @@
 (function() {
-  var addMarker, destination, directionsDisplay, directionsService, directionsVisible, distanceMatrixService, findBest, geocoder, getDestinations, latEnd, latStart, lngEnd, lngStart, map, markers, maxDalay, maxDelay, myOptions, origin, parseLocation, randomBetween, request, routeDistances, slopeOfLine, travelMode, wayPointCount, wayPointLat, wayPointLng, wayPoints, withLatLng, withRandomWayPoint, withRoute, withRouteDistance;
+  var addMarker, destination, directionsDisplay, directionsService, directionsVisible, distanceMatrixService, geocoder, getDestinations, latEnd, latStart, lngEnd, lngStart, map, markers, maxDelay, myOptions, origin, parseLocation, randomBetween, request, routeDistances, slopeOfLine, travelMode, wayPointCount, wayPointLat, wayPointLng, wayPoints, withLatLng, withRandomWayPoint, withRoute, withRouteDistance;
 
   destination = null;
 
@@ -25,9 +25,7 @@
 
   markers = [];
 
-  maxDalay = null;
-
-  maxDelay = 0;
+  maxDelay = null;
 
   myOptions = null;
 
@@ -62,8 +60,8 @@
     destination = null;
     directionsDisplay = new google.maps.DirectionsRenderer();
     directionsService = new google.maps.DirectionsService();
-    distanceMatrixService = new google.maps.DistanceMatrixService();
     directionsVisible = false;
+    distanceMatrixService = new google.maps.DistanceMatrixService();
     geocoder = new google.maps.Geocoder();
     latEnd = 0;
     latStart = 0;
@@ -71,15 +69,15 @@
     lngStart = 0;
     map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
     markers = [];
+    maxDelay = 0;
     origin = null;
     request = null;
+    routeDistances = [];
     travelMode = google.maps.TravelMode.DRIVING;
     wayPointCount = 0;
     wayPointLat = [];
     wayPointLng = [];
     wayPoints = [];
-    maxDelay = 0;
-    routeDistances = [];
     directionsDisplay.setMap(map);
     directionsDisplay.setPanel(document.getElementById("directionsPanel"));
     return google.maps.event.addListener(map, "click", function(event) {
@@ -127,7 +125,7 @@
   };
 
   window.util.setDelay = function() {
-    return maxDelay = document.getElementById("maxdelay").value;
+    return maxDelay = parseInt(document.getElementById("maxdelay").value) * 60;
   };
 
   window.util.drawRoute = function(wayPointLatLng) {
@@ -175,46 +173,33 @@
   };
 
   getDestinations = function(origin, destination) {
-    var MAX_ROUTES, originalDistance, routes, routesFound, _, _results;
+    var MAX_ROUTES, found, originalDuration, routes, routesRequested;
     routes = [];
-    originalDistance = null;
-    routesFound = 0;
-    MAX_ROUTES = 10;
-    withRouteDistance(origin, destination, [], function(distance, duration, wayPointLatLng) {
-      originalDistance = distance;
-      if (routesFound === MAX_ROUTES) return findBest(routes);
-    });
-    _results = [];
-    for (_ = 0; 0 <= MAX_ROUTES ? _ <= MAX_ROUTES : _ >= MAX_ROUTES; 0 <= MAX_ROUTES ? _++ : _--) {
-      _results.push(withRandomWayPoint(origin, destination, function(wayPoint) {
-        return withRouteDistance(origin, destination, wayPoint, function(distance, duration, wayPointLatLng) {
-          routes.push([wayPointLatLng, distance, duration]);
-          if (routesFound === MAX_ROUTES && originalDistance !== null) {
-            return findBest(routes);
-          } else {
-            return routesFound += 1;
+    originalDuration = null;
+    MAX_ROUTES = 20;
+    found = false;
+    routesRequested = 0;
+    return withRouteDistance(origin, destination, [], function(distance, duration, wayPointLatLng) {
+      var _, _results;
+      originalDuration = duration;
+      _results = [];
+      for (_ = 0; 0 <= MAX_ROUTES ? _ <= MAX_ROUTES : _ >= MAX_ROUTES; 0 <= MAX_ROUTES ? _++ : _--) {
+        _results.push(withRandomWayPoint(origin, destination, function(wayPoint) {
+          if (!found) {
+            return withRouteDistance(origin, destination, wayPoint, function(distance, duration, wayPointLatLng) {
+              routesRequested += 1;
+              if (!found && duration - maxDelay < originalDuration) {
+                found = true;
+                return window.util.drawRoute(wayPointLatLng);
+              } else if (!found && routesRequested === MAX_ROUTES) {
+                return alert("No route found.");
+              }
+            });
           }
-        });
-      }));
-    }
-    return _results;
-  };
-
-  findBest = function(routes) {
-    var distance, duration, lowestDuration, lowestwayPointLatLng, route, wayPointLatLng, _i, _len;
-    lowestwayPointLatLng = null;
-    lowestDuration = null;
-    for (_i = 0, _len = routes.length; _i < _len; _i++) {
-      route = routes[_i];
-      wayPointLatLng = route[0];
-      distance = route[1];
-      duration = route[2];
-      if (lowestwayPointLatLng === null || duration < lowestDuration) {
-        lowestwayPointLatLng = wayPointLatLng;
-        lowestDuration = duration;
+        }));
       }
-    }
-    return window.util.drawRoute(lowestwayPointLatLng);
+      return _results;
+    });
   };
 
   withLatLng = function(address, func) {

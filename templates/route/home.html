@@ -31,17 +31,17 @@
             <b>Maximum Delay: </b>
             <select id="maxdelay" onchange="window.util.setDelay();">
                 <option value="0">Unlimited</option>
-                <option value="5">5</option>
+                <option value="5" selected>5</option>
                 <option value="10">10</option>
                 <option value="15">15</option>
             </select>
         </div>
         <div>
             <strong>Enter Your Location: </strong><br>
-            <input type="text" name="start" id="start" style="width:250px;" value="san jose"/>
+            <input type="text" name="start" id="start" style="width:250px;" value="Mountain View, CA"/>
             <input type="hidden" name="latlng_start" id="lat_start" value="-1"/>
             <input type="hidden" name="latlng_start" id="lat_end" value="-1"/>
-            <input type="text" name="end" id="end"  style="width:250px;" value="san francisco"/>
+            <input type="text" name="end" id="end"  style="width:250px;" value="San Jose, CA"/>
             <input type="hidden" name="latlng_end" id="lng_end" value="-1"/>
             <input type="hidden" name="latlng_start" id="lng_start" value="-1"/>
             <input type="button" value="Search" onclick="window.util.drawRoute()" />

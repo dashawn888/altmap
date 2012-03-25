@@ -10,8 +10,7 @@ lngEnd = null
 lngStart = null
 map = null
 markers = []
-maxDalay = null
-maxDelay = 0
+maxDelay = null
 myOptions = null
 origin = null
 request = null
@@ -35,8 +34,8 @@ window.util.init = ->
     destination = null
     directionsDisplay = new google.maps.DirectionsRenderer()
     directionsService = new google.maps.DirectionsService()
-    distanceMatrixService = new google.maps.DistanceMatrixService()
     directionsVisible = false
+    distanceMatrixService = new google.maps.DistanceMatrixService()
     geocoder = new google.maps.Geocoder()
     latEnd = 0
     latStart = 0
@@ -45,18 +44,18 @@ window.util.init = ->
     map = new google.maps.Map document.getElementById("map_canvas"),
         myOptions
     markers = []
+    maxDelay = 0
     origin = null
     request = null
+    routeDistances = []
     travelMode = google.maps.TravelMode.DRIVING
     wayPointCount = 0
     wayPointLat = []
     wayPointLng = []
     wayPoints = []
-    maxDelay = 0
-    routeDistances = []
+
     directionsDisplay.setMap map
-    directionsDisplay.setPanel document.getElementById(
-        "directionsPanel")
+    directionsDisplay.setPanel document.getElementById("directionsPanel")
     google.maps.event.addListener map, "click", (event) ->
         if origin == null
             wayPointCount = 0
@@ -71,8 +70,7 @@ window.util.init = ->
             addMarker destination
         else
             if wayPoints.length < 9
-                wayPoints.push {
-                    location: destination, stopover: true}
+                wayPoints.push {location: destination, stopover: true}
                 destination = event.latLng
                 wayPointCount = wayPoints.length
                 wayPointLat[wayPointCount] = destination.lat()
@@ -93,7 +91,7 @@ window.util.setMode = ->
         travelMode = google.maps.DirectionsTravelMode.BICYCLING
 
 window.util.setDelay = ->
-    maxDelay = document.getElementById("maxdelay").value
+    maxDelay = parseInt(document.getElementById("maxdelay").value) * 60
 
 # This function requires the origin and destination to be set.
 window.util.drawRoute = (wayPointLatLng=null) ->
@@ -138,10 +136,11 @@ window.util.findRoute = ->
             getDestinations origin_loc, destination_loc
 
 getDestinations = (origin, destination) ->
+    found = false
+    MAX_ROUTES = 20
+    originalDuration = null
     routes = []
-    originalDistance = null
-    routesFound = 0
-    MAX_ROUTES = 10
+    routesRequested = 0
 
     # Get the original route time
     withRouteDistance(
@@ -149,46 +148,33 @@ getDestinations = (origin, destination) ->
         destination,
         [],
         (distance, duration, wayPointLatLng) ->
-            originalDistance = distance
+            originalDuration = duration
 
-            if routesFound == MAX_ROUTES
-                findBest(routes)
-    )
-
-    for _ in [0..MAX_ROUTES]
-        withRandomWayPoint(
-            origin,
-            destination,
-            (wayPoint) -> 
-                withRouteDistance(
+            for _ in [0..MAX_ROUTES]
+                withRandomWayPoint(
                     origin,
                     destination,
-                    wayPoint,
-                    (distance, duration, wayPointLatLng) ->
-                        routes.push([wayPointLatLng, distance, duration])
-                        if routesFound == MAX_ROUTES and originalDistance != null
-                            findBest(routes)
-                        else
-                            routesFound += 1
+                    (wayPoint) -> 
+                        # Just skip through the rest if it's found.
+                        if not found
+                            withRouteDistance(
+                                origin,
+                                destination,
+                                wayPoint,
+                                (distance, duration, wayPointLatLng) ->
+                                    routesRequested += 1
+                                    if not found and 
+                                      duration - maxDelay < originalDuration
+                                        found = true
+                                        window.util.drawRoute wayPointLatLng
+                                    else if not found and
+                                      routesRequested == MAX_ROUTES
+                                        alert("No route found.")
+                            )
                 )
-        )
+    )
 
 # Done with all the exposed functionality.
-findBest = (routes) ->
-    lowestwayPointLatLng = null
-    lowestDuration = null
-
-    for route in routes
-        wayPointLatLng = route[0]
-        distance = route[1]
-        duration = route[2]
-
-        if lowestwayPointLatLng == null or duration < lowestDuration
-            lowestwayPointLatLng = wayPointLatLng
-            lowestDuration = duration
-
-    window.util.drawRoute lowestwayPointLatLng
-
 withLatLng = (address, func) ->
     geocoder.geocode {address: address}, (results, status) ->
         if status == google.maps.GeocoderStatus.OK
